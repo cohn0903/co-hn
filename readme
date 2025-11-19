@@ -1,10 +1,18 @@
 # Apple Intelligence Shortcut for OmniFocus Tasks
 
-This guide explains how to build an iOS/iPadOS/macOS Shortcut (or a small
-helper app) that asks Apple Intelligence to produce OmniFocus task payloads
-via the new `LanguageModel` APIs introduced in the Intelligence Framework.
-It is organized so you can adapt the pieces independently: model prompts,
-JSON schema validation, and OmniFocus automation.
+This guide now sits alongside a working Swift Package that demonstrates the
+intent in code. Open the repo in Xcode (or run it via Swift Package Manager) to
+experiment with the App Intent, JSON helpers, LanguageModel wrapper, and a CLI
+that exercises the workflow even on Linux.
+
+```
+co-hn/
+├─ Package.swift
+├─ Sources/
+│  ├─ OmniFocusTaskIntentKit/  ← Library shared by Shortcut + CLI
+│  └─ TaskIntentCLI/           ← Mock-driven executable
+└─ Tests/OmniFocusTaskIntentKitTests
+```
 
 ## Prerequisites
 
@@ -16,6 +24,14 @@ JSON schema validation, and OmniFocus automation.
    allow Shortcuts to add tasks.
 4. **SwiftData/SwiftUI familiarity** – The examples assume you can create a
    SwiftUI container app that exposes App Intents to Shortcuts.
+
+## Building and running
+
+1. `swift build` – validate the package compiles.
+2. `swift test` – run the JSON and generator unit tests.
+3. `swift run TaskIntentCLI "Call Erica about demo"` – feed a natural-language
+   brief through the mock-driven CLI. On macOS the `OmniFocusClient` hits the
+   real `AddTaskIntent`; on Linux it logs the JSON that would be sent.
 
 ## High-level flow
 
@@ -49,18 +65,19 @@ struct CreateTaskIntent: AppIntent {
 ### 2. Wrapping the LanguageModel
 
 The Intelligence Framework provides access to Apple Intelligence models via the
-`LanguageModel` class. Use a dedicated helper so you can unit test prompt
-construction separately.
+`LanguageModel` class. The package exposes a reusable helper in
+`Sources/OmniFocusTaskIntentKit/TaskJSONGenerator.swift` so you can unit test
+prompt construction and mock the model when Linux CI runs.
 
 ```swift
-import Intelligence
+import OmniFocusTaskIntentKit
 
-struct TaskJSONGenerator {
-    private let model = LanguageModel.system
+struct TaskJSONGenerator<Model: TaskLanguageModel & Sendable> {
+    private let model: Model
 
     func generatePayload(from brief: String) async throws -> TaskPayload {
         let schema = TaskPayload.schemaDescription
-        let prompt = 
+        let prompt =
 """
 You generate OmniFocus task JSON using the following schema:
 \(schema)
@@ -68,7 +85,7 @@ Only respond with JSON.
 User brief: \(brief)
 """
         let response = try await model.complete(.init(prompt: prompt,
-                                                       format: .json()))
+                                                      format: .json))
         return try TaskPayload(decodingJSON: response.output)
     }
 }
@@ -140,11 +157,18 @@ struct OmniFocusClient {
 Because Apple Intelligence runs on-device, the Shortcut remains private and
 works offline once the model has been downloaded.
 
+### App Intent source
+
+`Sources/OmniFocusTaskIntentKit/CreateTaskIntent.swift` compiles when the App
+Intents SDK is present (iOS/iPadOS/macOS). When you run the package on Linux the
+file is skipped, but the CLI and tests continue to build against the mock
+implementations.
+
 ## Testing
 
 - Use the **Intelligence Inspector** in Xcode to view prompt/response logs.
-- Write unit tests for `TaskJSONGenerator` by injecting a mock
-  `LanguageModelProtocol` implementation.
+- Write unit tests for `TaskJSONGenerator` by injecting the provided
+  `MockLanguageModel` (see `Sources/OmniFocusTaskIntentKit/MockLanguageModel.swift`).
 - Add UI tests for the App Intent inside the Shortcuts app to ensure errors are
   surfaced when OmniFocus cannot find a project/tag.
 
