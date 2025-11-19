@@ -1,1 +1,165 @@
+# Apple Intelligence Shortcut for OmniFocus Tasks
 
+This guide explains how to build an iOS/iPadOS/macOS Shortcut (or a small
+helper app) that asks Apple Intelligence to produce OmniFocus task payloads
+via the new `LanguageModel` APIs introduced in the Intelligence Framework.
+It is organized so you can adapt the pieces independently: model prompts,
+JSON schema validation, and OmniFocus automation.
+
+## Prerequisites
+
+1. **Apple platform beta software** – You need the latest Xcode beta and an
+   Apple Intelligence–enabled device running the corresponding developer beta.
+2. **Developer entitlements** – Enable the "Intelligence Framework" and
+   "App Intents" capabilities in your app/Shortcut host.
+3. **OmniFocus automation permission** – In OmniFocus, enable Automation and
+   allow Shortcuts to add tasks.
+4. **SwiftData/SwiftUI familiarity** – The examples assume you can create a
+   SwiftUI container app that exposes App Intents to Shortcuts.
+
+## High-level flow
+
+```
+Shortcut → Ask for natural language task description → invoke App Intent →
+LanguageModel generates JSON payload → validate payload → call OmniFocus intent
+```
+
+### 1. Shortcut entry point
+
+Create an App Intent (or a Shortcut action) called **"Create OmniFocus Task"**
+that accepts a free-form string (the task brief). This intent will be exposed
+both inside your helper app and inside the Shortcuts app.
+
+```swift
+struct CreateTaskIntent: AppIntent {
+    static var title: LocalizedStringResource = "Create OmniFocus Task"
+
+    @Parameter(title: "Task Brief")
+    var taskBrief: String
+
+    func perform() async throws -> some IntentResult {
+        let generator = TaskJSONGenerator()
+        let payload = try await generator.generatePayload(from: taskBrief)
+        try await OmniFocusClient().createTask(from: payload)
+        return .result(value: "Created \(payload.title)")
+    }
+}
+```
+
+### 2. Wrapping the LanguageModel
+
+The Intelligence Framework provides access to Apple Intelligence models via the
+`LanguageModel` class. Use a dedicated helper so you can unit test prompt
+construction separately.
+
+```swift
+import Intelligence
+
+struct TaskJSONGenerator {
+    private let model = LanguageModel.system
+
+    func generatePayload(from brief: String) async throws -> TaskPayload {
+        let schema = TaskPayload.schemaDescription
+        let prompt = 
+"""
+You generate OmniFocus task JSON using the following schema:
+\(schema)
+Only respond with JSON.
+User brief: \(brief)
+"""
+        let response = try await model.complete(.init(prompt: prompt,
+                                                       format: .json()))
+        return try TaskPayload(decodingJSON: response.output)
+    }
+}
+```
+
+`TaskPayload.schemaDescription` is a static string (or `Codable` reflection)
+that the model uses to stay within the fields OmniFocus expects.
+
+### 3. JSON schema and validation
+
+Define a lightweight struct that mirrors the fields accepted by OmniFocus when
+using its `AddTaskIntent`. Constrain the model by enumerating valid contexts
+(priority, tag names, due-date formats, etc.).
+
+```swift
+struct TaskPayload: Codable {
+    var title: String
+    var notes: String?
+    var dueDate: Date?
+    var project: String?
+    var tags: [String]?
+
+    static var schemaDescription: String {
+        """
+        {
+          "title": "Required, concise string",
+          "notes": "Optional supporting info",
+          "dueDate": "ISO-8601 date string",
+          "project": "Exact OmniFocus project name",
+          "tags": ["Existing tag names"]
+        }
+        """
+    }
+}
+```
+
+Use `JSONDecoder` with `.iso8601` date decoding. If decoding fails, send a
+clarification prompt back to the model (`LanguageModel.RepairRequest`).
+
+### 4. Calling OmniFocus
+
+OmniFocus exposes Shortcuts intents such as **Add Task**. From Swift you can
+use `INInteraction` or, more simply, invoke the Shortcuts Automation URL scheme.
+For native code, bridge via `AppIntents`:
+
+```swift
+import AppIntents
+import Intents
+
+struct OmniFocusClient {
+    func createTask(from payload: TaskPayload) async throws {
+        var intent = AddTaskIntent()
+        intent.title = payload.title
+        intent.notes = payload.notes
+        intent.dueDate = payload.dueDate.flatMap { DateComponents.from($0) }
+        intent.project = payload.project
+        intent.tags = payload.tags
+        try await intent.perform()
+    }
+}
+```
+
+### 5. Building the Shortcut
+
+1. **Ask for Input** – Prompt the user (e.g., "What do you need to capture?").
+2. **Run App Intent** – Pass the input text to `CreateTaskIntent`.
+3. **Show Result** – Display success text or any validation error.
+
+Because Apple Intelligence runs on-device, the Shortcut remains private and
+works offline once the model has been downloaded.
+
+## Testing
+
+- Use the **Intelligence Inspector** in Xcode to view prompt/response logs.
+- Write unit tests for `TaskJSONGenerator` by injecting a mock
+  `LanguageModelProtocol` implementation.
+- Add UI tests for the App Intent inside the Shortcuts app to ensure errors are
+  surfaced when OmniFocus cannot find a project/tag.
+
+## Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| Model refuses to emit JSON | Ensure `format: .json()` and remind "Only respond with JSON." |
+| OmniFocus reports missing project | Pre-populate the schema with valid names or query OmniFocus via the `Get Projects` intent beforehand. |
+| Shortcut hangs | Verify device has Apple Intelligence beta downloaded and user approved on-device processing. |
+
+## Extending the idea
+
+- Attach files by asking the model to emit `attachments` with local URLs and
+  then pass those to OmniFocus via the Files picker.
+- Add a **"Focus Area"** parameter to the intent so the user can constrain
+  which project list the model may reference.
+- Log created tasks to a `SwiftData` store so you can build activity charts.
