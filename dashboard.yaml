@@ -5,219 +5,402 @@ views:
     icon: mdi:home
     type: custom:grid-layout
     layout:
-      grid-template-columns: 1fr 1fr 1fr
+      grid-template-columns: repeat(3, 1fr)
       grid-template-rows: auto
-      grid-gap: 16px
+      grid-gap: 20px
+      padding: 20px
       mediaquery:
+        "(max-width: 1200px)":
+          grid-template-columns: repeat(2, 1fr)
         "(max-width: 800px)":
           grid-template-columns: 1fr
     cards:
-      # ===== TIME & DATE DISPLAY =====
-      - type: custom:digital-clock
-        dateFormat: dddd, MMMM D, YYYY
-        timeFormat: h:mm A
-        style:
-          font-size: 2em
-          text-align: center
+      # ===== GLOBAL STYLES =====
+      - type: custom:mod-card
+        card_mod:
+          style:
+            .: |
+              :host {
+                --card-bg: rgba(255, 255, 255, 0.05);
+                --card-border: rgba(255, 255, 255, 0.1);
+                --text-primary: #ffffff;
+                --text-secondary: rgba(255, 255, 255, 0.7);
+                --accent-blue: #6366f1;
+                --accent-purple: #8b5cf6;
+                --accent-pink: #ec4899;
+                --accent-orange: #f97316;
+                --accent-green: #10b981;
+                --accent-red: #ef4444;
+              }
+
+      # ===== TIME & DATE CARD =====
+      - type: custom:button-card
+        name: " "
+        show_icon: false
+        show_name: false
+        styles:
+          card:
+            - background: "linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)"
+            - backdrop-filter: "blur(20px)"
+            - "-webkit-backdrop-filter": "blur(20px)"
+            - border: "1px solid rgba(255, 255, 255, 0.1)"
+            - border-radius: "24px"
+            - padding: "40px"
+            - box-shadow: "0 8px 32px rgba(0, 0, 0, 0.3)"
+        custom_fields:
+          time: |
+            [[[
+              return `<span style="font-size: 4.5rem; font-weight: 200; letter-spacing: -2px; color: white;">
+                ${new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true})}
+              </span>`;
+            ]]]
+          date: |
+            [[[
+              return `<span style="font-size: 1.2rem; font-weight: 400; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 3px;">
+                ${new Date().toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric'})}
+              </span>`;
+            ]]]
         card_mod:
           style: |
             ha-card {
-              background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-              color: white;
-              padding: 20px;
-              border-radius: 15px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
             }
 
-      # ===== SCHOOL COUNTDOWN TIMER =====
-      - type: custom:timer-bar-card
-        entity: sensor.school_departure_countdown
-        name: "Time Until School Departure"
-        icon: mdi:bus-school
-        bar_background: "#333"
-        bar_foreground: "#4CAF50"
-        card_mod:
-          style: |
-            ha-card {
-              background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
-              border-radius: 15px;
-            }
-
-      # Alternative School Countdown using Markdown Template
+      # ===== SCHOOL COUNTDOWN CARD =====
       - type: markdown
-        title: "School Departure Countdown"
         content: |
           {% set target_hour = 7 %}
           {% set target_minute = 15 %}
-          {% set now = now() %}
-          {% set target = now.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0) %}
-          {% if now > target %}
+          {% set now_time = now() %}
+          {% set target = now_time.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0) %}
+          {% if now_time > target %}
             {% set target = target + timedelta(days=1) %}
           {% endif %}
-          {% set diff = target - now %}
-          {% set hours = (diff.seconds // 3600) %}
-          {% set minutes = ((diff.seconds % 3600) // 60) %}
-          {% set seconds = diff.seconds % 60 %}
+          {% set diff = (target - now_time).total_seconds() | int %}
+          {% set hours = diff // 3600 %}
+          {% set minutes = (diff % 3600) // 60 %}
 
-          # {{ hours }}:{{ '%02d' | format(minutes) }}:{{ '%02d' | format(seconds) }}
-
-          **Until 7:15 AM School Departure**
-
-          {% if hours == 0 and minutes < 30 %}
-          Time to get ready!
-          {% elif hours == 0 and minutes < 15 %}
-          Almost time to leave!
-          {% endif %}
+          <div style="text-align: center;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px; color: rgba(255,255,255,0.5); margin-bottom: 16px;">School Departure</div>
+            <div style="font-size: 3.5rem; font-weight: 200; color: white; letter-spacing: -1px;">
+              {{ hours }}<span style="color: rgba(255,255,255,0.4);">h</span> {{ '%02d' | format(minutes) }}<span style="color: rgba(255,255,255,0.4);">m</span>
+            </div>
+            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-top: 12px;">Until 7:15 AM</div>
+            {% if now_time.weekday() >= 5 %}
+            <div style="margin-top: 16px; padding: 8px 16px; background: rgba(16, 185, 129, 0.2); border-radius: 20px; display: inline-block; font-size: 0.8rem; color: #10b981;">Weekend</div>
+            {% elif hours == 0 and minutes <= 15 %}
+            <div style="margin-top: 16px; padding: 8px 16px; background: rgba(239, 68, 68, 0.2); border-radius: 20px; display: inline-block; font-size: 0.8rem; color: #ef4444; animation: pulse 1s infinite;">Time to Leave!</div>
+            {% elif hours == 0 and minutes <= 30 %}
+            <div style="margin-top: 16px; padding: 8px 16px; background: rgba(249, 115, 22, 0.2); border-radius: 20px; display: inline-block; font-size: 0.8rem; color: #f97316;">Get Ready!</div>
+            {% endif %}
+          </div>
         card_mod:
           style: |
             ha-card {
-              background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%);
-              color: white;
-              text-align: center;
-              border-radius: 15px;
-              font-size: 1.2em;
+              background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(239, 68, 68, 0.15) 100%);
+              backdrop-filter: blur(20px);
+              -webkit-backdrop-filter: blur(20px);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-radius: 24px;
+              padding: 32px;
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+            ha-markdown {
+              padding: 0 !important;
             }
 
-      # ===== TODAY'S WEATHER =====
-      - type: weather-forecast
+      # ===== CURRENT WEATHER CARD =====
+      - type: custom:button-card
         entity: weather.home
-        name: "Today's Weather"
-        show_current: true
-        show_forecast: false
+        show_icon: false
+        show_name: false
+        show_state: false
+        styles:
+          card:
+            - background: "linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%)"
+            - backdrop-filter: "blur(20px)"
+            - "-webkit-backdrop-filter": "blur(20px)"
+            - border: "1px solid rgba(255, 255, 255, 0.1)"
+            - border-radius: "24px"
+            - padding: "32px"
+            - box-shadow: "0 8px 32px rgba(0, 0, 0, 0.3)"
+        custom_fields:
+          weather_icon: |
+            [[[
+              const conditions = {
+                'sunny': '☀️',
+                'clear-night': '🌙',
+                'partlycloudy': '⛅',
+                'cloudy': '☁️',
+                'rainy': '🌧️',
+                'pouring': '⛈️',
+                'snowy': '❄️',
+                'fog': '🌫️',
+                'windy': '💨',
+                'lightning': '⚡'
+              };
+              return `<span style="font-size: 4rem;">${conditions[entity.state] || '🌤️'}</span>`;
+            ]]]
+          temp: |
+            [[[
+              return `<span style="font-size: 3rem; font-weight: 200; color: white;">${Math.round(entity.attributes.temperature)}°</span>`;
+            ]]]
+          condition: |
+            [[[
+              return `<span style="font-size: 1rem; color: rgba(255,255,255,0.7); text-transform: capitalize;">${entity.state.replace('-', ' ')}</span>`;
+            ]]]
+          details: |
+            [[[
+              return `
+                <div style="display: flex; gap: 24px; margin-top: 16px; justify-content: center;">
+                  <div style="text-align: center;">
+                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); text-transform: uppercase;">Humidity</div>
+                    <div style="font-size: 1.1rem; color: white;">${entity.attributes.humidity}%</div>
+                  </div>
+                  <div style="text-align: center;">
+                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); text-transform: uppercase;">Wind</div>
+                    <div style="font-size: 1.1rem; color: white;">${entity.attributes.wind_speed} mph</div>
+                  </div>
+                </div>
+              `;
+            ]]]
         card_mod:
           style: |
             ha-card {
-              background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-              border-radius: 15px;
+              text-align: center;
             }
 
-      # ===== HOURLY WEATHER FORECAST =====
+      # ===== HOURLY FORECAST CARD =====
       - type: custom:weather-chart-card
         entity: weather.home
         show_main: false
         show_temperature: true
         show_current_condition: false
         show_attributes: false
-        show_humidity: true
+        show_humidity: false
         show_pressure: false
-        show_wind_direction: true
-        show_wind_speed: true
+        show_wind_direction: false
+        show_wind_speed: false
         forecast:
           type: hourly
-          show_wind_forecast: true
+          show_wind_forecast: false
           condition_icons: true
           round_temp: true
           style: style1
         card_mod:
           style: |
             ha-card {
-              background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-              border-radius: 15px;
+              background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+              backdrop-filter: blur(20px);
+              -webkit-backdrop-filter: blur(20px);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-radius: 24px;
+              padding: 24px;
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             }
 
-      # ===== WEEKLY WEATHER FORECAST =====
-      - type: weather-forecast
-        entity: weather.home
-        name: "Weekly Forecast"
-        show_current: false
-        show_forecast: true
-        forecast_type: daily
-        card_mod:
-          style: |
-            ha-card {
-              background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
-              border-radius: 15px;
-            }
-
-      # ===== FIVE DAY CALENDAR =====
-      - type: custom:atomic-calendar-revive
-        name: "Calendar"
-        enableModeChange: true
-        defaultMode: Event
-        calShowDescription: true
-        maxDaysToShow: 5
-        showProgressBar: true
-        showFullDayProgress: true
-        showEventIcon: true
-        showHiddenText: false
-        hideDuplicates: true
-        showMultiDay: true
-        showMultiDayEventParts: true
-        compactMode: false
-        hoursOnSameLine: true
-        showRelativeTime: true
-        showCalendarName: true
-        sortByStartTime: true
-        dimFinishedEvents: true
-        entities:
-          - entity: calendar.family_calendar
-            color: "#4285F4"
-          - entity: calendar.personal
-            color: "#0F9D58"
-          - entity: calendar.work
-            color: "#DB4437"
-          - entity: calendar.kids
-            color: "#F4B400"
-        card_mod:
-          style: |
-            ha-card {
-              background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
-              border-radius: 15px;
-            }
-
-      # ===== HOUSTON ROCKETS SCHEDULE =====
-      - type: custom:teamtracker-card
-        entity: sensor.houston_rockets
-        card_mod:
-          style: |
-            ha-card {
-              background: linear-gradient(135deg, #CE1141 0%, #000000 100%);
-              border-radius: 15px;
-            }
-
-      # Alternative Rockets Card using Markdown (if teamtracker not available)
+      # ===== WEEKLY FORECAST CARD =====
       - type: markdown
-        title: "Houston Rockets"
         content: |
-          {{ state_attr('sensor.houston_rockets', 'team_name') }}
-
-          **Next Game:**
-          {{ state_attr('sensor.houston_rockets', 'opponent') }}
-          {{ state_attr('sensor.houston_rockets', 'date') }} at {{ state_attr('sensor.houston_rockets', 'time') }}
-
-          **Venue:** {{ state_attr('sensor.houston_rockets', 'venue') }}
-
-          {% if state_attr('sensor.houston_rockets', 'in_progress') %}
-          **LIVE:** {{ state_attr('sensor.houston_rockets', 'team_score') }} - {{ state_attr('sensor.houston_rockets', 'opponent_score') }}
+          <div style="text-align: center; margin-bottom: 20px;">
+            <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px; color: rgba(255,255,255,0.5);">7-Day Forecast</span>
+          </div>
+          {% set forecast = state_attr('weather.home', 'forecast') %}
+          {% if forecast %}
+          <div style="display: flex; justify-content: space-between; gap: 8px;">
+            {% for day in forecast[:7] %}
+            <div style="text-align: center; flex: 1; padding: 12px 4px; background: rgba(255,255,255,0.05); border-radius: 16px;">
+              <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">{{ as_timestamp(day.datetime) | timestamp_custom('%a') }}</div>
+              <div style="font-size: 1.5rem; margin: 8px 0;">
+                {% if day.condition == 'sunny' or day.condition == 'clear' %}☀️
+                {% elif day.condition == 'partlycloudy' %}⛅
+                {% elif day.condition == 'cloudy' %}☁️
+                {% elif day.condition == 'rainy' %}🌧️
+                {% elif day.condition == 'snowy' %}❄️
+                {% else %}🌤️{% endif %}
+              </div>
+              <div style="font-size: 1rem; color: white; font-weight: 500;">{{ day.temperature | round }}°</div>
+              {% if day.templow %}
+              <div style="font-size: 0.8rem; color: rgba(255,255,255,0.4);">{{ day.templow | round }}°</div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
           {% endif %}
         card_mod:
           style: |
             ha-card {
-              background: linear-gradient(135deg, #CE1141 0%, #000000 100%);
-              color: white;
-              border-radius: 15px;
+              background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+              backdrop-filter: blur(20px);
+              -webkit-backdrop-filter: blur(20px);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-radius: 24px;
+              padding: 24px;
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+            ha-markdown {
+              padding: 0 !important;
             }
 
-      # ===== ROCKETS UPCOMING GAMES LIST =====
-      - type: custom:flex-table-card
-        title: "Rockets Schedule"
+      # ===== CALENDAR CARD =====
+      - type: custom:atomic-calendar-revive
+        name: ""
+        enableModeChange: false
+        defaultMode: Event
+        calShowDescription: true
+        maxDaysToShow: 5
+        showProgressBar: false
+        showFullDayProgress: false
+        showEventIcon: false
+        showHiddenText: false
+        hideDuplicates: true
+        showMultiDay: true
+        showMultiDayEventParts: true
+        compactMode: true
+        hoursOnSameLine: true
+        showRelativeTime: true
+        showCalendarName: false
+        sortByStartTime: true
+        dimFinishedEvents: true
+        eventTitleColor: "white"
+        eventDateColor: "rgba(255,255,255,0.6)"
+        dayWrapperLineColor: "rgba(255,255,255,0.1)"
+        eventBarColor: "rgba(99, 102, 241, 0.8)"
         entities:
-          include: sensor.houston_rockets_schedule
-        columns:
-          - name: Date
-            data: games
-            modify: x.date
-          - name: Opponent
-            data: games
-            modify: x.opponent
-          - name: Time
-            data: games
-            modify: x.time
-          - name: Location
-            data: games
-            modify: x.location
+          - entity: calendar.family_calendar
+            color: "#6366f1"
+          - entity: calendar.personal
+            color: "#10b981"
+          - entity: calendar.work
+            color: "#f97316"
+          - entity: calendar.kids
+            color: "#ec4899"
         card_mod:
           style: |
             ha-card {
-              background: linear-gradient(135deg, #1a1a2e 0%, #CE1141 100%);
-              border-radius: 15px;
+              background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+              backdrop-filter: blur(20px);
+              -webkit-backdrop-filter: blur(20px);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-radius: 24px;
+              padding: 24px;
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             }
+            .calTitleContainer {
+              display: none !important;
+            }
+            .cal-eventContainer {
+              padding: 12px 0 !important;
+              border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+            }
+
+      # ===== HOUSTON ROCKETS CARD =====
+      - type: markdown
+        content: |
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #CE1141 0%, #000000 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 1.8rem;">🚀</span>
+            </div>
+            <div>
+              <div style="font-size: 1.4rem; font-weight: 600; color: white;">Houston Rockets</div>
+              <div style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">NBA Basketball</div>
+            </div>
+          </div>
+
+          {% set events = state_attr('sensor.houston_rockets', 'events') %}
+          {% if events %}
+            {% for event in events %}
+              {% if 'Rockets' in event.name %}
+          <div style="background: rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; margin-bottom: 12px;">
+            <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.4); margin-bottom: 8px;">Next Game</div>
+            <div style="font-size: 1.1rem; color: white; font-weight: 500;">{{ event.name }}</div>
+            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-top: 8px;">
+              {{ as_timestamp(event.date) | timestamp_custom('%A, %B %d') }}
+            </div>
+            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">
+              {{ as_timestamp(event.date) | timestamp_custom('%I:%M %p') }}
+            </div>
+          </div>
+              {% endif %}
+            {% endfor %}
+          {% else %}
+          <div style="background: rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; text-align: center;">
+            <div style="color: rgba(255,255,255,0.5);">Loading schedule...</div>
+          </div>
+          {% endif %}
+
+          <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <div style="flex: 1; background: rgba(206, 17, 65, 0.2); border-radius: 12px; padding: 12px; text-align: center;">
+              <div style="font-size: 0.65rem; text-transform: uppercase; color: rgba(255,255,255,0.5);">Status</div>
+              <div style="font-size: 0.95rem; color: #CE1141; font-weight: 600;">{{ states('sensor.houston_rockets') or 'Upcoming' }}</div>
+            </div>
+            <div style="flex: 1; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px; text-align: center;">
+              <div style="font-size: 0.65rem; text-transform: uppercase; color: rgba(255,255,255,0.5);">Arena</div>
+              <div style="font-size: 0.95rem; color: white;">Toyota Center</div>
+            </div>
+          </div>
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, rgba(206, 17, 65, 0.15) 0%, rgba(0, 0, 0, 0.3) 100%);
+              backdrop-filter: blur(20px);
+              -webkit-backdrop-filter: blur(20px);
+              border: 1px solid rgba(206, 17, 65, 0.3);
+              border-radius: 24px;
+              padding: 28px;
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+            ha-markdown {
+              padding: 0 !important;
+            }
+
+      # ===== ROCKETS SCHEDULE TABLE =====
+      - type: markdown
+        content: |
+          <div style="text-align: center; margin-bottom: 20px;">
+            <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px; color: rgba(255,255,255,0.5);">Upcoming Games</span>
+          </div>
+
+          {% set events = state_attr('sensor.houston_rockets', 'events') %}
+          {% if events %}
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            {% set count = namespace(value=0) %}
+            {% for event in events %}
+              {% if 'Rockets' in event.name and count.value < 5 %}
+                {% set count.value = count.value + 1 %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: rgba(255,255,255,0.03); border-radius: 12px; border-left: 3px solid #CE1141;">
+              <div>
+                <div style="font-size: 0.9rem; color: white;">{{ event.shortName or event.name }}</div>
+                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">{{ as_timestamp(event.date) | timestamp_custom('%a, %b %d') }}</div>
+              </div>
+              <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">{{ as_timestamp(event.date) | timestamp_custom('%I:%M %p') }}</div>
+            </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+          {% else %}
+          <div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.5);">
+            No games scheduled
+          </div>
+          {% endif %}
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, rgba(30, 30, 30, 0.6) 0%, rgba(20, 20, 20, 0.8) 100%);
+              backdrop-filter: blur(20px);
+              -webkit-backdrop-filter: blur(20px);
+              border: 1px solid rgba(255, 255, 255, 0.08);
+              border-radius: 24px;
+              padding: 24px;
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+            ha-markdown {
+              padding: 0 !important;
+            }
+
+# ===== BACKGROUND THEME =====
+background: "linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)"

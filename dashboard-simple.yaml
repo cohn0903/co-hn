@@ -1,134 +1,276 @@
-title: Family Dashboard (Simple)
+title: Family Dashboard
 views:
   - title: Home
     path: home
     icon: mdi:home
-    type: sections
-    sections:
-      # ===== TIME, DATE & COUNTDOWN SECTION =====
-      - type: grid
+    type: panel
+    cards:
+      - type: vertical-stack
         cards:
-          # Current Time and Date
-          - type: markdown
-            content: |
-              # {{ now().strftime('%I:%M %p') }}
-              ## {{ now().strftime('%A, %B %d, %Y') }}
+          # ===== HEADER ROW: TIME, COUNTDOWN, WEATHER =====
+          - type: horizontal-stack
+            cards:
+              # Current Time and Date
+              - type: markdown
+                content: |
+                  <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 3.5rem; font-weight: 200; color: var(--primary-text-color); letter-spacing: -2px;">
+                      {{ now().strftime('%I:%M %p') }}
+                    </div>
+                    <div style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 3px; color: var(--secondary-text-color); margin-top: 8px;">
+                      {{ now().strftime('%A, %B %d') }}
+                    </div>
+                  </div>
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: var(--card-background-color);
+                      border-radius: 20px;
+                      border: 1px solid var(--divider-color);
+                    }
 
-          # School Departure Countdown
-          - type: markdown
-            title: "School Countdown"
-            content: |
-              {% set target_hour = 7 %}
-              {% set target_minute = 15 %}
-              {% set now_time = now() %}
-              {% set target = now_time.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0) %}
-              {% if now_time > target %}
-                {% set target = target + timedelta(days=1) %}
-              {% endif %}
-              {% set diff = (target - now_time).total_seconds() | int %}
-              {% set hours = diff // 3600 %}
-              {% set minutes = (diff % 3600) // 60 %}
-              {% set seconds = diff % 60 %}
-
-              # {{ hours }}h {{ minutes }}m
-
-              **Until 7:15 AM**
-
-              {% if hours == 0 and minutes <= 30 %}
-              Get ready now!
-              {% elif hours == 0 and minutes <= 15 %}
-              Time to leave!
-              {% elif now_time.weekday() >= 5 %}
-              (Weekend - No School)
-              {% endif %}
-
-      # ===== WEATHER SECTION =====
-      - type: grid
-        cards:
-          # Today's Weather
-          - type: weather-forecast
-            entity: weather.home
-            name: "Today's Weather"
-            show_current: true
-            show_forecast: false
-
-          # Weekly Forecast
-          - type: weather-forecast
-            entity: weather.home
-            name: "Weekly Forecast"
-            show_current: false
-            show_forecast: true
-            forecast_type: daily
-
-          # Hourly Forecast
-          - type: weather-forecast
-            entity: weather.home
-            name: "Hourly Forecast"
-            show_current: false
-            show_forecast: true
-            forecast_type: hourly
-
-      # ===== CALENDAR SECTION =====
-      - type: grid
-        cards:
-          - type: calendar
-            entities:
-              - calendar.family_calendar
-              - calendar.personal
-              - calendar.work
-              - calendar.kids
-            initial_view: listWeek
-
-      # ===== HOUSTON ROCKETS SECTION =====
-      - type: grid
-        cards:
-          - type: markdown
-            title: "Houston Rockets"
-            content: |
-              {% set events = state_attr('sensor.houston_rockets', 'events') %}
-              {% if events %}
-                {% for event in events %}
-                  {% if 'Rockets' in event.name %}
-                  **{{ event.name }}**
-
-                  {{ as_timestamp(event.date) | timestamp_custom('%A, %B %d at %I:%M %p') }}
-
-                  Status: {{ states('sensor.houston_rockets') }}
+              # School Departure Countdown
+              - type: markdown
+                content: |
+                  {% set target_hour = 7 %}
+                  {% set target_minute = 15 %}
+                  {% set now_time = now() %}
+                  {% set target = now_time.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0) %}
+                  {% if now_time > target %}
+                    {% set target = target + timedelta(days=1) %}
                   {% endif %}
-                {% endfor %}
-              {% else %}
-              No upcoming games found. Check sensor configuration.
-              {% endif %}
+                  {% set diff = (target - now_time).total_seconds() | int %}
+                  {% set hours = diff // 3600 %}
+                  {% set minutes = (diff % 3600) // 60 %}
 
-          - type: entities
-            title: "Next Game Details"
-            entities:
-              - entity: sensor.houston_rockets
-                name: "Game Status"
-              - entity: sensor.houston_rockets_schedule
-                name: "Schedule"
+                  <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--secondary-text-color); margin-bottom: 12px;">
+                      School Departure
+                    </div>
+                    <div style="font-size: 2.8rem; font-weight: 200; color: var(--primary-text-color);">
+                      {{ hours }}<span style="opacity: 0.5;">h</span> {{ '%02d' | format(minutes) }}<span style="opacity: 0.5;">m</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--secondary-text-color); margin-top: 8px;">
+                      Until 7:15 AM
+                    </div>
+                    {% if now_time.weekday() >= 5 %}
+                    <div style="margin-top: 12px; padding: 6px 14px; background: rgba(16, 185, 129, 0.15); border-radius: 16px; display: inline-block; font-size: 0.75rem; color: #10b981;">
+                      Weekend
+                    </div>
+                    {% elif hours == 0 and minutes <= 15 %}
+                    <div style="margin-top: 12px; padding: 6px 14px; background: rgba(239, 68, 68, 0.15); border-radius: 16px; display: inline-block; font-size: 0.75rem; color: #ef4444;">
+                      Time to Leave!
+                    </div>
+                    {% elif hours == 0 and minutes <= 30 %}
+                    <div style="margin-top: 12px; padding: 6px 14px; background: rgba(249, 115, 22, 0.15); border-radius: 16px; display: inline-block; font-size: 0.75rem; color: #f97316;">
+                      Get Ready!
+                    </div>
+                    {% endif %}
+                  </div>
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: var(--card-background-color);
+                      border-radius: 20px;
+                      border: 1px solid var(--divider-color);
+                    }
 
-  # ===== DETAILED WEATHER VIEW =====
+              # Current Weather
+              - type: markdown
+                content: |
+                  {% set conditions = {
+                    'sunny': '☀️',
+                    'clear-night': '🌙',
+                    'partlycloudy': '⛅',
+                    'cloudy': '☁️',
+                    'rainy': '🌧️',
+                    'pouring': '⛈️',
+                    'snowy': '❄️',
+                    'fog': '🌫️',
+                    'windy': '💨',
+                    'lightning': '⚡'
+                  } %}
+                  <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 3rem; margin-bottom: 8px;">
+                      {{ conditions.get(states('weather.home'), '🌤️') }}
+                    </div>
+                    <div style="font-size: 2.5rem; font-weight: 200; color: var(--primary-text-color);">
+                      {{ state_attr('weather.home', 'temperature') | round }}°
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--secondary-text-color); text-transform: capitalize; margin-top: 4px;">
+                      {{ states('weather.home') | replace('-', ' ') }}
+                    </div>
+                    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 12px; font-size: 0.8rem; color: var(--secondary-text-color);">
+                      <span>💧 {{ state_attr('weather.home', 'humidity') }}%</span>
+                      <span>💨 {{ state_attr('weather.home', 'wind_speed') }} mph</span>
+                    </div>
+                  </div>
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: var(--card-background-color);
+                      border-radius: 20px;
+                      border: 1px solid var(--divider-color);
+                    }
+
+          # ===== SECOND ROW: WEATHER FORECASTS =====
+          - type: horizontal-stack
+            cards:
+              # Hourly Forecast
+              - type: weather-forecast
+                entity: weather.home
+                name: "Hourly"
+                show_current: false
+                show_forecast: true
+                forecast_type: hourly
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      border: 1px solid var(--divider-color);
+                    }
+
+              # Weekly Forecast
+              - type: weather-forecast
+                entity: weather.home
+                name: "This Week"
+                show_current: false
+                show_forecast: true
+                forecast_type: daily
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 20px;
+                      border: 1px solid var(--divider-color);
+                    }
+
+          # ===== THIRD ROW: CALENDAR & ROCKETS =====
+          - type: horizontal-stack
+            cards:
+              # 5-Day Calendar
+              - type: vertical-stack
+                cards:
+                  - type: markdown
+                    content: |
+                      <div style="padding: 16px 20px 8px 20px;">
+                        <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--secondary-text-color);">
+                          Upcoming Events
+                        </div>
+                      </div>
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: transparent;
+                          box-shadow: none;
+                        }
+                  - type: calendar
+                    entities:
+                      - calendar.family_calendar
+                      - calendar.personal
+                      - calendar.work
+                      - calendar.kids
+                    initial_view: listWeek
+                    card_mod:
+                      style: |
+                        ha-card {
+                          border-radius: 20px;
+                          border: 1px solid var(--divider-color);
+                        }
+
+              # Houston Rockets
+              - type: vertical-stack
+                cards:
+                  - type: markdown
+                    content: |
+                      <div style="padding: 20px;">
+                        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px;">
+                          <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #CE1141 0%, #000000 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 1.5rem;">🚀</span>
+                          </div>
+                          <div>
+                            <div style="font-size: 1.2rem; font-weight: 600; color: var(--primary-text-color);">Houston Rockets</div>
+                            <div style="font-size: 0.8rem; color: var(--secondary-text-color);">NBA Basketball</div>
+                          </div>
+                        </div>
+
+                        {% set events = state_attr('sensor.houston_rockets', 'events') %}
+                        {% if events %}
+                          {% set count = namespace(value=0) %}
+                          {% for event in events %}
+                            {% if 'Rockets' in event.name and count.value < 4 %}
+                              {% set count.value = count.value + 1 %}
+                        <div style="padding: 14px 16px; background: var(--card-background-color); border-radius: 14px; margin-bottom: 10px; border-left: 3px solid #CE1141;">
+                          <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                              <div style="font-size: 0.9rem; color: var(--primary-text-color); font-weight: 500;">{{ event.shortName or event.name }}</div>
+                              <div style="font-size: 0.75rem; color: var(--secondary-text-color); margin-top: 4px;">
+                                {{ as_timestamp(event.date) | timestamp_custom('%a, %b %d') }}
+                              </div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--secondary-text-color);">
+                              {{ as_timestamp(event.date) | timestamp_custom('%I:%M %p') }}
+                            </div>
+                          </div>
+                        </div>
+                            {% endif %}
+                          {% endfor %}
+                        {% else %}
+                        <div style="padding: 20px; text-align: center; color: var(--secondary-text-color);">
+                          Loading schedule...
+                        </div>
+                        {% endif %}
+
+                        <div style="display: flex; gap: 10px; margin-top: 16px;">
+                          <div style="flex: 1; background: rgba(206, 17, 65, 0.1); border-radius: 12px; padding: 12px; text-align: center;">
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: var(--secondary-text-color);">Status</div>
+                            <div style="font-size: 0.9rem; color: #CE1141; font-weight: 600; margin-top: 4px;">{{ states('sensor.houston_rockets') or 'Upcoming' }}</div>
+                          </div>
+                          <div style="flex: 1; background: var(--card-background-color); border-radius: 12px; padding: 12px; text-align: center;">
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: var(--secondary-text-color);">Arena</div>
+                            <div style="font-size: 0.9rem; color: var(--primary-text-color); margin-top: 4px;">Toyota Center</div>
+                          </div>
+                        </div>
+                      </div>
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: var(--card-background-color);
+                          border-radius: 20px;
+                          border: 1px solid var(--divider-color);
+                        }
+                        ha-markdown {
+                          padding: 0 !important;
+                        }
+
+  # ===== WEATHER VIEW =====
   - title: Weather
     path: weather
     icon: mdi:weather-partly-cloudy
-    type: sections
-    sections:
-      - type: grid
+    cards:
+      - type: vertical-stack
         cards:
           - type: weather-forecast
             entity: weather.home
             show_current: true
             show_forecast: true
             forecast_type: daily
-            name: "Full Weather Details"
-
+            name: "Weather Details"
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 20px;
+                }
           - type: weather-forecast
             entity: weather.home
             show_current: false
             show_forecast: true
             forecast_type: hourly
-            name: "48-Hour Forecast"
+            name: "Hourly Forecast"
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 20px;
+                }
 
   # ===== CALENDAR VIEW =====
   - title: Calendar
@@ -142,44 +284,72 @@ views:
           - calendar.work
           - calendar.kids
         initial_view: dayGridMonth
+        card_mod:
+          style: |
+            ha-card {
+              border-radius: 20px;
+            }
 
   # ===== ROCKETS VIEW =====
   - title: Rockets
     path: rockets
     icon: mdi:basketball
-    type: sections
-    sections:
-      - type: grid
+    cards:
+      - type: vertical-stack
         cards:
           - type: markdown
-            title: "Houston Rockets"
             content: |
-              {% set events = state_attr('sensor.houston_rockets', 'events') %}
-              {% if events %}
-              ## Upcoming Games
-
-              {% for event in events[:10] %}
-                {% if 'Rockets' in event.name %}
-              ---
-              **{{ event.name }}**
-
-              {{ as_timestamp(event.date) | timestamp_custom('%A, %B %d') }}
-
-              {{ as_timestamp(event.date) | timestamp_custom('%I:%M %p') }}
-
-                {% endif %}
-              {% endfor %}
-              {% else %}
-              Configure the REST sensor to see game data.
-              {% endif %}
-
+              <div style="text-align: center; padding: 30px;">
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #CE1141 0%, #000000 100%); border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <span style="font-size: 2.5rem;">🚀</span>
+                </div>
+                <div style="font-size: 1.8rem; font-weight: 600; color: var(--primary-text-color);">Houston Rockets</div>
+                <div style="font-size: 1rem; color: var(--secondary-text-color); margin-top: 4px;">Toyota Center • Houston, TX</div>
+              </div>
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, rgba(206, 17, 65, 0.1) 0%, transparent 100%);
+                  border-radius: 20px;
+                }
           - type: markdown
-            title: "Go Rockets!"
             content: |
-              The Houston Rockets are a professional basketball team based in Houston, Texas.
-
-              **Arena:** Toyota Center
-
-              **Conference:** Western Conference
-
-              **Division:** Southwest Division
+              <div style="padding: 20px;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: var(--secondary-text-color); margin-bottom: 16px;">
+                  Full Schedule
+                </div>
+                {% set events = state_attr('sensor.houston_rockets', 'events') %}
+                {% if events %}
+                  {% set count = namespace(value=0) %}
+                  {% for event in events %}
+                    {% if 'Rockets' in event.name and count.value < 10 %}
+                      {% set count.value = count.value + 1 %}
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--card-background-color); border-radius: 14px; margin-bottom: 10px; border-left: 3px solid #CE1141;">
+                  <div>
+                    <div style="font-size: 1rem; color: var(--primary-text-color); font-weight: 500;">{{ event.name }}</div>
+                    <div style="font-size: 0.8rem; color: var(--secondary-text-color); margin-top: 4px;">
+                      {{ as_timestamp(event.date) | timestamp_custom('%A, %B %d, %Y') }}
+                    </div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-size: 0.95rem; color: var(--primary-text-color);">
+                      {{ as_timestamp(event.date) | timestamp_custom('%I:%M %p') }}
+                    </div>
+                  </div>
+                </div>
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                <div style="padding: 30px; text-align: center; color: var(--secondary-text-color);">
+                  No games scheduled. Check sensor configuration.
+                </div>
+                {% endif %}
+              </div>
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 20px;
+                }
+                ha-markdown {
+                  padding: 0 !important;
+                }
