@@ -1,0 +1,223 @@
+title: Family Dashboard
+views:
+  - title: Home
+    path: home
+    icon: mdi:home
+    type: custom:grid-layout
+    layout:
+      grid-template-columns: 1fr 1fr 1fr
+      grid-template-rows: auto
+      grid-gap: 16px
+      mediaquery:
+        "(max-width: 800px)":
+          grid-template-columns: 1fr
+    cards:
+      # ===== TIME & DATE DISPLAY =====
+      - type: custom:digital-clock
+        dateFormat: dddd, MMMM D, YYYY
+        timeFormat: h:mm A
+        style:
+          font-size: 2em
+          text-align: center
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+              color: white;
+              padding: 20px;
+              border-radius: 15px;
+            }
+
+      # ===== SCHOOL COUNTDOWN TIMER =====
+      - type: custom:timer-bar-card
+        entity: sensor.school_departure_countdown
+        name: "Time Until School Departure"
+        icon: mdi:bus-school
+        bar_background: "#333"
+        bar_foreground: "#4CAF50"
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+              border-radius: 15px;
+            }
+
+      # Alternative School Countdown using Markdown Template
+      - type: markdown
+        title: "School Departure Countdown"
+        content: |
+          {% set target_hour = 7 %}
+          {% set target_minute = 15 %}
+          {% set now = now() %}
+          {% set target = now.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0) %}
+          {% if now > target %}
+            {% set target = target + timedelta(days=1) %}
+          {% endif %}
+          {% set diff = target - now %}
+          {% set hours = (diff.seconds // 3600) %}
+          {% set minutes = ((diff.seconds % 3600) // 60) %}
+          {% set seconds = diff.seconds % 60 %}
+
+          # {{ hours }}:{{ '%02d' | format(minutes) }}:{{ '%02d' | format(seconds) }}
+
+          **Until 7:15 AM School Departure**
+
+          {% if hours == 0 and minutes < 30 %}
+          Time to get ready!
+          {% elif hours == 0 and minutes < 15 %}
+          Almost time to leave!
+          {% endif %}
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%);
+              color: white;
+              text-align: center;
+              border-radius: 15px;
+              font-size: 1.2em;
+            }
+
+      # ===== TODAY'S WEATHER =====
+      - type: weather-forecast
+        entity: weather.home
+        name: "Today's Weather"
+        show_current: true
+        show_forecast: false
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+              border-radius: 15px;
+            }
+
+      # ===== HOURLY WEATHER FORECAST =====
+      - type: custom:weather-chart-card
+        entity: weather.home
+        show_main: false
+        show_temperature: true
+        show_current_condition: false
+        show_attributes: false
+        show_humidity: true
+        show_pressure: false
+        show_wind_direction: true
+        show_wind_speed: true
+        forecast:
+          type: hourly
+          show_wind_forecast: true
+          condition_icons: true
+          round_temp: true
+          style: style1
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+              border-radius: 15px;
+            }
+
+      # ===== WEEKLY WEATHER FORECAST =====
+      - type: weather-forecast
+        entity: weather.home
+        name: "Weekly Forecast"
+        show_current: false
+        show_forecast: true
+        forecast_type: daily
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
+              border-radius: 15px;
+            }
+
+      # ===== FIVE DAY CALENDAR =====
+      - type: custom:atomic-calendar-revive
+        name: "Calendar"
+        enableModeChange: true
+        defaultMode: Event
+        calShowDescription: true
+        maxDaysToShow: 5
+        showProgressBar: true
+        showFullDayProgress: true
+        showEventIcon: true
+        showHiddenText: false
+        hideDuplicates: true
+        showMultiDay: true
+        showMultiDayEventParts: true
+        compactMode: false
+        hoursOnSameLine: true
+        showRelativeTime: true
+        showCalendarName: true
+        sortByStartTime: true
+        dimFinishedEvents: true
+        entities:
+          - entity: calendar.family_calendar
+            color: "#4285F4"
+          - entity: calendar.personal
+            color: "#0F9D58"
+          - entity: calendar.work
+            color: "#DB4437"
+          - entity: calendar.kids
+            color: "#F4B400"
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+              border-radius: 15px;
+            }
+
+      # ===== HOUSTON ROCKETS SCHEDULE =====
+      - type: custom:teamtracker-card
+        entity: sensor.houston_rockets
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, #CE1141 0%, #000000 100%);
+              border-radius: 15px;
+            }
+
+      # Alternative Rockets Card using Markdown (if teamtracker not available)
+      - type: markdown
+        title: "Houston Rockets"
+        content: |
+          {{ state_attr('sensor.houston_rockets', 'team_name') }}
+
+          **Next Game:**
+          {{ state_attr('sensor.houston_rockets', 'opponent') }}
+          {{ state_attr('sensor.houston_rockets', 'date') }} at {{ state_attr('sensor.houston_rockets', 'time') }}
+
+          **Venue:** {{ state_attr('sensor.houston_rockets', 'venue') }}
+
+          {% if state_attr('sensor.houston_rockets', 'in_progress') %}
+          **LIVE:** {{ state_attr('sensor.houston_rockets', 'team_score') }} - {{ state_attr('sensor.houston_rockets', 'opponent_score') }}
+          {% endif %}
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, #CE1141 0%, #000000 100%);
+              color: white;
+              border-radius: 15px;
+            }
+
+      # ===== ROCKETS UPCOMING GAMES LIST =====
+      - type: custom:flex-table-card
+        title: "Rockets Schedule"
+        entities:
+          include: sensor.houston_rockets_schedule
+        columns:
+          - name: Date
+            data: games
+            modify: x.date
+          - name: Opponent
+            data: games
+            modify: x.opponent
+          - name: Time
+            data: games
+            modify: x.time
+          - name: Location
+            data: games
+            modify: x.location
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, #1a1a2e 0%, #CE1141 100%);
+              border-radius: 15px;
+            }

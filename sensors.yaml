@@ -1,0 +1,151 @@
+# Template Sensors for Family Dashboard
+# Add this to your configuration.yaml or include as a separate file
+
+template:
+  - sensor:
+      # ===== SCHOOL DEPARTURE COUNTDOWN SENSOR =====
+      - name: "School Departure Countdown"
+        unique_id: school_departure_countdown
+        icon: mdi:bus-school
+        state: >
+          {% set target_hour = 7 %}
+          {% set target_minute = 15 %}
+          {% set now_time = now() %}
+          {% set target = now_time.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0) %}
+          {% if now_time > target %}
+            {% set target = target + timedelta(days=1) %}
+          {% endif %}
+          {% set diff = (target - now_time).total_seconds() | int %}
+          {% set hours = diff // 3600 %}
+          {% set minutes = (diff % 3600) // 60 %}
+          {% set seconds = diff % 60 %}
+          {{ hours }}:{{ '%02d' | format(minutes) }}:{{ '%02d' | format(seconds) }}
+        attributes:
+          target_time: "7:15 AM"
+          hours_remaining: >
+            {% set target_hour = 7 %}
+            {% set target_minute = 15 %}
+            {% set now_time = now() %}
+            {% set target = now_time.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0) %}
+            {% if now_time > target %}
+              {% set target = target + timedelta(days=1) %}
+            {% endif %}
+            {% set diff = (target - now_time).total_seconds() | int %}
+            {{ diff // 3600 }}
+          minutes_remaining: >
+            {% set target_hour = 7 %}
+            {% set target_minute = 15 %}
+            {% set now_time = now() %}
+            {% set target = now_time.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0) %}
+            {% if now_time > target %}
+              {% set target = target + timedelta(days=1) %}
+            {% endif %}
+            {% set diff = (target - now_time).total_seconds() | int %}
+            {{ (diff % 3600) // 60 }}
+          total_seconds: >
+            {% set target_hour = 7 %}
+            {% set target_minute = 15 %}
+            {% set now_time = now() %}
+            {% set target = now_time.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0) %}
+            {% if now_time > target %}
+              {% set target = target + timedelta(days=1) %}
+            {% endif %}
+            {{ ((target - now_time).total_seconds()) | int }}
+          is_school_day: >
+            {{ now().weekday() < 5 }}
+          alert_level: >
+            {% set target_hour = 7 %}
+            {% set target_minute = 15 %}
+            {% set now_time = now() %}
+            {% set target = now_time.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0) %}
+            {% if now_time > target %}
+              {% set target = target + timedelta(days=1) %}
+            {% endif %}
+            {% set diff = (target - now_time).total_seconds() | int %}
+            {% set minutes = diff // 60 %}
+            {% if minutes <= 5 %}
+              critical
+            {% elif minutes <= 15 %}
+              warning
+            {% elif minutes <= 30 %}
+              attention
+            {% else %}
+              normal
+            {% endif %}
+
+      # ===== CURRENT TIME SENSOR =====
+      - name: "Current Time Display"
+        unique_id: current_time_display
+        icon: mdi:clock
+        state: >
+          {{ now().strftime('%I:%M %p') }}
+        attributes:
+          date: >
+            {{ now().strftime('%A, %B %d, %Y') }}
+          short_date: >
+            {{ now().strftime('%m/%d/%Y') }}
+          day_of_week: >
+            {{ now().strftime('%A') }}
+          month: >
+            {{ now().strftime('%B') }}
+          year: >
+            {{ now().strftime('%Y') }}
+
+# ===== NBA/HOUSTON ROCKETS SENSOR (using TeamTracker integration) =====
+# Note: This requires the TeamTracker integration from HACS
+# The sensor will be created automatically when you configure TeamTracker
+# with the Houston Rockets team
+
+# Alternative: REST sensor for NBA API
+rest:
+  - resource: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/10/schedule"
+    scan_interval: 3600
+    sensor:
+      - name: "Houston Rockets Schedule"
+        unique_id: houston_rockets_schedule
+        value_template: "{{ value_json.team.displayName }}"
+        json_attributes_path: "$.events"
+        json_attributes:
+          - name
+          - shortName
+          - date
+
+  - resource: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
+    scan_interval: 60
+    sensor:
+      - name: "Houston Rockets"
+        unique_id: houston_rockets
+        value_template: >
+          {% for event in value_json.events %}
+            {% if 'Rockets' in event.name %}
+              {% if event.status.type.state == 'in' %}
+                Live
+              {% elif event.status.type.state == 'pre' %}
+                Upcoming
+              {% else %}
+                Final
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        json_attributes_path: "$"
+        json_attributes:
+          - events
+
+# ===== ALTERNATIVE: Manual Rockets Sensor with Schedules =====
+# Use this if the REST API doesn't work for your setup
+input_text:
+  rockets_next_opponent:
+    name: Rockets Next Opponent
+    initial: ""
+
+  rockets_next_game_date:
+    name: Rockets Next Game Date
+    initial: ""
+
+  rockets_next_game_time:
+    name: Rockets Next Game Time
+    initial: ""
+
+  rockets_venue:
+    name: Rockets Venue
+    initial: ""

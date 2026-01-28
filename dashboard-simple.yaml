@@ -1,0 +1,185 @@
+title: Family Dashboard (Simple)
+views:
+  - title: Home
+    path: home
+    icon: mdi:home
+    type: sections
+    sections:
+      # ===== TIME, DATE & COUNTDOWN SECTION =====
+      - type: grid
+        cards:
+          # Current Time and Date
+          - type: markdown
+            content: |
+              # {{ now().strftime('%I:%M %p') }}
+              ## {{ now().strftime('%A, %B %d, %Y') }}
+
+          # School Departure Countdown
+          - type: markdown
+            title: "School Countdown"
+            content: |
+              {% set target_hour = 7 %}
+              {% set target_minute = 15 %}
+              {% set now_time = now() %}
+              {% set target = now_time.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0) %}
+              {% if now_time > target %}
+                {% set target = target + timedelta(days=1) %}
+              {% endif %}
+              {% set diff = (target - now_time).total_seconds() | int %}
+              {% set hours = diff // 3600 %}
+              {% set minutes = (diff % 3600) // 60 %}
+              {% set seconds = diff % 60 %}
+
+              # {{ hours }}h {{ minutes }}m
+
+              **Until 7:15 AM**
+
+              {% if hours == 0 and minutes <= 30 %}
+              Get ready now!
+              {% elif hours == 0 and minutes <= 15 %}
+              Time to leave!
+              {% elif now_time.weekday() >= 5 %}
+              (Weekend - No School)
+              {% endif %}
+
+      # ===== WEATHER SECTION =====
+      - type: grid
+        cards:
+          # Today's Weather
+          - type: weather-forecast
+            entity: weather.home
+            name: "Today's Weather"
+            show_current: true
+            show_forecast: false
+
+          # Weekly Forecast
+          - type: weather-forecast
+            entity: weather.home
+            name: "Weekly Forecast"
+            show_current: false
+            show_forecast: true
+            forecast_type: daily
+
+          # Hourly Forecast
+          - type: weather-forecast
+            entity: weather.home
+            name: "Hourly Forecast"
+            show_current: false
+            show_forecast: true
+            forecast_type: hourly
+
+      # ===== CALENDAR SECTION =====
+      - type: grid
+        cards:
+          - type: calendar
+            entities:
+              - calendar.family_calendar
+              - calendar.personal
+              - calendar.work
+              - calendar.kids
+            initial_view: listWeek
+
+      # ===== HOUSTON ROCKETS SECTION =====
+      - type: grid
+        cards:
+          - type: markdown
+            title: "Houston Rockets"
+            content: |
+              {% set events = state_attr('sensor.houston_rockets', 'events') %}
+              {% if events %}
+                {% for event in events %}
+                  {% if 'Rockets' in event.name %}
+                  **{{ event.name }}**
+
+                  {{ as_timestamp(event.date) | timestamp_custom('%A, %B %d at %I:%M %p') }}
+
+                  Status: {{ states('sensor.houston_rockets') }}
+                  {% endif %}
+                {% endfor %}
+              {% else %}
+              No upcoming games found. Check sensor configuration.
+              {% endif %}
+
+          - type: entities
+            title: "Next Game Details"
+            entities:
+              - entity: sensor.houston_rockets
+                name: "Game Status"
+              - entity: sensor.houston_rockets_schedule
+                name: "Schedule"
+
+  # ===== DETAILED WEATHER VIEW =====
+  - title: Weather
+    path: weather
+    icon: mdi:weather-partly-cloudy
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: weather-forecast
+            entity: weather.home
+            show_current: true
+            show_forecast: true
+            forecast_type: daily
+            name: "Full Weather Details"
+
+          - type: weather-forecast
+            entity: weather.home
+            show_current: false
+            show_forecast: true
+            forecast_type: hourly
+            name: "48-Hour Forecast"
+
+  # ===== CALENDAR VIEW =====
+  - title: Calendar
+    path: calendar
+    icon: mdi:calendar
+    cards:
+      - type: calendar
+        entities:
+          - calendar.family_calendar
+          - calendar.personal
+          - calendar.work
+          - calendar.kids
+        initial_view: dayGridMonth
+
+  # ===== ROCKETS VIEW =====
+  - title: Rockets
+    path: rockets
+    icon: mdi:basketball
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: markdown
+            title: "Houston Rockets"
+            content: |
+              {% set events = state_attr('sensor.houston_rockets', 'events') %}
+              {% if events %}
+              ## Upcoming Games
+
+              {% for event in events[:10] %}
+                {% if 'Rockets' in event.name %}
+              ---
+              **{{ event.name }}**
+
+              {{ as_timestamp(event.date) | timestamp_custom('%A, %B %d') }}
+
+              {{ as_timestamp(event.date) | timestamp_custom('%I:%M %p') }}
+
+                {% endif %}
+              {% endfor %}
+              {% else %}
+              Configure the REST sensor to see game data.
+              {% endif %}
+
+          - type: markdown
+            title: "Go Rockets!"
+            content: |
+              The Houston Rockets are a professional basketball team based in Houston, Texas.
+
+              **Arena:** Toyota Center
+
+              **Conference:** Western Conference
+
+              **Division:** Southwest Division

@@ -1,0 +1,178 @@
+# Automations for Family Dashboard
+# Add these to your automations.yaml file
+
+# ===== SCHOOL DEPARTURE ALERTS =====
+- id: school_departure_30min_warning
+  alias: "School Departure - 30 Minute Warning"
+  description: "Alert 30 minutes before school departure time"
+  trigger:
+    - platform: time
+      at: "06:45:00"
+  condition:
+    - condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+  action:
+    - service: notify.notify
+      data:
+        title: "School Departure in 30 Minutes"
+        message: "Time to start getting ready! Bus leaves at 7:15 AM."
+    - service: tts.speak
+      target:
+        entity_id: tts.google_en_com
+      data:
+        message: "Attention! 30 minutes until school departure. Time to get ready!"
+        media_player_entity_id: media_player.living_room
+
+- id: school_departure_15min_warning
+  alias: "School Departure - 15 Minute Warning"
+  description: "Alert 15 minutes before school departure time"
+  trigger:
+    - platform: time
+      at: "07:00:00"
+  condition:
+    - condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+  action:
+    - service: notify.notify
+      data:
+        title: "School Departure in 15 Minutes"
+        message: "15 minutes left! Make sure you have everything ready."
+    - service: tts.speak
+      target:
+        entity_id: tts.google_en_com
+      data:
+        message: "15 minutes until school departure. Finish up and grab your backpacks!"
+        media_player_entity_id: media_player.living_room
+    - service: light.turn_on
+      target:
+        entity_id: light.kitchen
+      data:
+        brightness_pct: 100
+        color_temp: 350
+
+- id: school_departure_5min_warning
+  alias: "School Departure - 5 Minute Warning"
+  description: "Alert 5 minutes before school departure time"
+  trigger:
+    - platform: time
+      at: "07:10:00"
+  condition:
+    - condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+  action:
+    - service: notify.notify
+      data:
+        title: "School Departure in 5 Minutes!"
+        message: "Time to head out! Bus leaves in 5 minutes!"
+    - service: tts.speak
+      target:
+        entity_id: tts.google_en_com
+      data:
+        message: "5 minutes! Time to leave for school now!"
+        media_player_entity_id: media_player.living_room
+
+- id: school_departure_time
+  alias: "School Departure - Time to Leave"
+  description: "Alert when it's time to leave for school"
+  trigger:
+    - platform: time
+      at: "07:15:00"
+  condition:
+    - condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+  action:
+    - service: notify.notify
+      data:
+        title: "Time to Leave for School!"
+        message: "It's 7:15 AM - time to go!"
+    - service: tts.speak
+      target:
+        entity_id: tts.google_en_com
+      data:
+        message: "It's 7:15! Time to leave for school!"
+        media_player_entity_id: media_player.living_room
+
+# ===== ROCKETS GAME ALERTS =====
+- id: rockets_game_day_morning
+  alias: "Rockets Game Day Morning Alert"
+  description: "Alert on game days in the morning"
+  trigger:
+    - platform: time
+      at: "08:00:00"
+  condition:
+    - condition: template
+      value_template: >
+        {% set events = state_attr('sensor.houston_rockets_schedule', 'events') %}
+        {% if events %}
+          {% for event in events %}
+            {% if as_timestamp(event.date) | timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}
+              true
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+  action:
+    - service: notify.notify
+      data:
+        title: "Rockets Game Today!"
+        message: "The Houston Rockets play today! Go Rockets!"
+
+- id: rockets_game_starting_soon
+  alias: "Rockets Game Starting Soon"
+  description: "Alert 1 hour before Rockets game"
+  trigger:
+    - platform: state
+      entity_id: sensor.houston_rockets
+      to: "Upcoming"
+  condition:
+    - condition: template
+      value_template: >
+        {% set events = state_attr('sensor.houston_rockets', 'events') %}
+        {% if events %}
+          {% for event in events %}
+            {% if 'Rockets' in event.name %}
+              {% set game_time = as_timestamp(event.date) %}
+              {% set now_time = as_timestamp(now()) %}
+              {% if (game_time - now_time) <= 3600 and (game_time - now_time) > 0 %}
+                true
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+  action:
+    - service: notify.notify
+      data:
+        title: "Rockets Game Starting Soon!"
+        message: "Houston Rockets tip off in about an hour!"
+
+- id: rockets_game_live
+  alias: "Rockets Game Live Alert"
+  description: "Alert when Rockets game goes live"
+  trigger:
+    - platform: state
+      entity_id: sensor.houston_rockets
+      to: "Live"
+  action:
+    - service: notify.notify
+      data:
+        title: "Rockets Game is Live!"
+        message: "The Houston Rockets game has started! Tune in now!"
