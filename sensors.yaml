@@ -70,6 +70,22 @@
           {% else %}
             {{ ((target - now_time).total_seconds() // 60) | int }}
           {% endif %}
+        percentage_remaining: >
+          {% set target_hour = 7 %}
+          {% set target_minute = 15 %}
+          {% set start_hour = 6 %}
+          {% set now_time = now() %}
+          {% set target = now_time.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0) %}
+          {% set start = now_time.replace(hour=start_hour, minute=0, second=0, microsecond=0) %}
+          {% set total_seconds = (target - start).total_seconds() %}
+          {% if now_time >= target or now_time.weekday() >= 5 %}
+            0
+          {% elif now_time < start %}
+            100
+          {% else %}
+            {% set remaining = (target - now_time).total_seconds() %}
+            {{ ((remaining / total_seconds) * 100) | round(0) | int }}
+          {% endif %}
       icon: mdi:bus-school
 
     # Current Time Display

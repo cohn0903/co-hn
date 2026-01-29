@@ -222,40 +222,26 @@ views:
             view_layout:
               grid-column: span 2
 
-          # Timer Bar - spans 2 columns
-          - type: vertical-stack
-            cards:
-              - type: custom:mushroom-title-card
-                title: "⏱️ School Countdown"
-                card_mod:
-                  style: |
-                    ha-card {
-                      --title-font-size: 20px;
-                      padding: 0;
-                    }
-              - type: custom:timer-bar-card
-                entity: sensor.school_departure_countdown
-                name: ""
-                icon: mdi:timer-sand
-                bar_direction: right
-                bar_radius: 10px
-                bar_height: 30px
-                bar_background: "#E0E0E0"
-                bar_foreground: "#4CAF50"
-                text_width: 0px
-                modifications:
-                  - elapsed: 50%
-                    bar_foreground: "#FFC107"
-                  - elapsed: 75%
-                    bar_foreground: "#FF9800"
-                  - elapsed: 90%
-                    bar_foreground: "#F44336"
-                card_mod:
-                  style: |
-                    ha-card {
-                      background: linear-gradient(135deg, #C8E6C9, #E8F5E9);
-                      border-radius: 20px;
-                      border: 3px solid #4CAF50;
-                    }
+          # Countdown Gauge - spans 2 columns
+          - type: gauge
+            entity: sensor.school_departure_countdown
+            attribute: percentage_remaining
+            name: "⏱️ Time Remaining"
+            unit: "%"
+            min: 0
+            max: 100
+            needle: true
+            severity:
+              green: 50
+              yellow: 25
+              red: 10
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #C8E6C9, #E8F5E9);
+                  border-radius: 20px;
+                  border: 3px solid #4CAF50;
+                  font-size: 18px;
+                }
             view_layout:
               grid-column: span 2
