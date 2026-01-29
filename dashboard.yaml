@@ -10,7 +10,7 @@ views:
       padding: 16px
     badges: []
     cards:
-      # Weather Card
+      # Weather Section
       - type: custom:bubble-card
         card_type: separator
         name: Weather
@@ -22,12 +22,21 @@ views:
             backdrop-filter: blur(10px);
           }
 
-      - type: weather-forecast
+      # Weather Chart Card - Forecast with chart
+      - type: custom:weather-chart-card
         entity: weather.forecast_home
-        name: Local Weather
-        show_current: true
+        show_main: true
+        show_temperature: true
+        show_current_condition: true
+        show_attributes: true
+        show_humidity: true
+        show_pressure: true
+        show_wind_direction: true
+        show_wind_speed: true
+        show_sun: true
         show_forecast: true
         forecast_type: daily
+        number_of_forecasts: 5
         card_mod:
           style: |
             ha-card {
@@ -37,42 +46,28 @@ views:
               backdrop-filter: blur(10px);
             }
 
-      # Current Conditions from Weather Entity
-      - type: custom:mushroom-template-card
-        primary: "{{ state_attr('weather.forecast_home', 'temperature') }}°"
-        secondary: "{{ states('weather.forecast_home') | title }}"
-        icon: mdi:thermometer
-        icon_color: |
-          {% set temp = state_attr('weather.forecast_home', 'temperature') | float %}
-          {% if temp > 85 %}red
-          {% elif temp > 70 %}orange
-          {% elif temp > 50 %}green
-          {% else %}blue{% endif %}
+      # Weather Radar Card - Local radar view
+      - type: custom:weather-radar-card
+        data_source: RainViewer
+        show_marker: true
+        show_range: true
+        show_zoom: true
+        show_recenter: true
+        show_playback: true
+        square_map: false
+        show_scale: true
+        zoom_level: 8
+        center_latitude: 29.6686
+        center_longitude: -95.4838
+        marker_latitude: 29.6686
+        marker_longitude: -95.4838
         card_mod:
           style: |
             ha-card {
               background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.8));
-              border-radius: 16px;
+              border-radius: 20px;
               border: 1px solid rgba(255, 255, 255, 0.1);
               backdrop-filter: blur(10px);
-            }
-
-      # Weather Details
-      - type: custom:mushroom-chips-card
-        chips:
-          - type: template
-            icon: mdi:water-percent
-            content: "{{ state_attr('weather.forecast_home', 'humidity') }}%"
-          - type: template
-            icon: mdi:weather-windy
-            content: "{{ state_attr('weather.forecast_home', 'wind_speed') }} mph"
-          - type: template
-            icon: mdi:gauge
-            content: "{{ state_attr('weather.forecast_home', 'pressure') }} hPa"
-        card_mod:
-          style: |
-            ha-card {
-              background: transparent;
             }
 
       # Calendar Section
@@ -81,47 +76,25 @@ views:
         name: Calendar
         icon: mdi:calendar
 
-      - type: custom:atomic-calendar-revive
-        name: Cohn Family Calendar
-        entities:
+      # Week Planner Card
+      - type: custom:week-planner-card
+        calendars:
           - entity: calendar.cohn_shared_calendar
             color: "#6366f1"
-            name: Family
-        showProgressBar: true
-        showMonth: true
-        showWeekDay: true
-        showDate: true
-        showDeclined: false
-        showNoEventsForToday: true
-        showFullDayProgress: true
-        showEventIcon: true
-        showHiddenText: true
-        hideDuplicates: true
-        maxDaysToShow: 7
-        maxEventCount: 10
+        days: 7
+        startingDay: today
+        hideWeekend: false
+        noCardBackground: false
+        eventBackground: rgba(99, 102, 241, 0.3)
         showLocation: true
         showDescription: false
-        disableEventLink: false
-        disableLocationLink: false
-        linkTarget: _blank
-        dateFormat: MMM D
-        hoursFormat: h:mm A
-        defaultMode: Event
-        refreshInterval: 60
-        card_mod:
-          style: |
-            ha-card {
-              background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.8));
-              border-radius: 20px;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-              backdrop-filter: blur(10px);
-            }
-
-      # Simple Calendar Alternative (built-in)
-      - type: calendar
-        entities:
-          - calendar.cohn_shared_calendar
-        initial_view: listWeek
+        locationIcon: mdi:map-marker
+        hidePastEvents: true
+        hideDaysWithoutEvents: false
+        showEventIcon: true
+        showTime: true
+        timeFormat: h:mm A
+        dateFormat: ddd, MMM D
         card_mod:
           style: |
             ha-card {
@@ -137,66 +110,24 @@ views:
         name: Houston Rockets
         icon: mdi:basketball
 
-      # Team Tracker Card
-      - type: conditional
-        conditions:
-          - entity: sensor.team_tracker
-            state_not: unavailable
-        card:
-          type: custom:mushroom-template-card
-          primary: Houston Rockets
-          secondary: |
-            {{ states('sensor.team_tracker') }}
-          icon: mdi:basketball
-          icon_color: red
-          tap_action:
-            action: more-info
-          card_mod:
-            style: |
-              ha-card {
-                background: linear-gradient(135deg, rgba(206, 17, 65, 0.3), rgba(196, 206, 211, 0.2));
-                border-radius: 20px;
-                border: 1px solid rgba(206, 17, 65, 0.3);
-                backdrop-filter: blur(10px);
-              }
-              mushroom-shape-icon {
-                --shape-color: rgba(206, 17, 65, 0.3) !important;
-              }
-
-      # Team Tracker Details
-      - type: custom:mushroom-template-card
-        primary: |
-          {% if state_attr('sensor.team_tracker', 'team_name') %}
-            {{ state_attr('sensor.team_tracker', 'team_name') }}
-          {% else %}
-            Houston Rockets
-          {% endif %}
-        secondary: |
-          {% if state_attr('sensor.team_tracker', 'opponent_name') %}
-            vs {{ state_attr('sensor.team_tracker', 'opponent_name') }}
-            {% if state_attr('sensor.team_tracker', 'team_score') and state_attr('sensor.team_tracker', 'opponent_score') %}
-              | {{ state_attr('sensor.team_tracker', 'team_score') }} - {{ state_attr('sensor.team_tracker', 'opponent_score') }}
-            {% endif %}
-          {% else %}
-            {{ states('sensor.team_tracker') }}
-          {% endif %}
-        icon: mdi:basketball-hoop
-        icon_color: red
+      # Team Tracker Card - Official card for sensor.team_tracker
+      - type: custom:teamtracker-card
+        entity: sensor.team_tracker
+        home_side: left
         card_mod:
           style: |
             ha-card {
-              background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.8));
-              border-radius: 16px;
-              border: 1px solid rgba(255, 255, 255, 0.1);
+              background: linear-gradient(135deg, rgba(206, 17, 65, 0.3), rgba(196, 206, 211, 0.2));
+              border-radius: 20px;
+              border: 1px solid rgba(206, 17, 65, 0.3);
               backdrop-filter: blur(10px);
             }
 
-      # Game Status Card
+      # Game Details Card
       - type: markdown
         content: |
-          ## Next Game
           {% if state_attr('sensor.team_tracker', 'date') %}
-          **Date:** {{ state_attr('sensor.team_tracker', 'date') }}
+          **Next Game:** {{ state_attr('sensor.team_tracker', 'date') }}
           {% endif %}
           {% if state_attr('sensor.team_tracker', 'kickoff_in') %}
           **Starts in:** {{ state_attr('sensor.team_tracker', 'kickoff_in') }}
@@ -205,7 +136,7 @@ views:
           **Venue:** {{ state_attr('sensor.team_tracker', 'venue') }}
           {% endif %}
           {% if state_attr('sensor.team_tracker', 'broadcast') %}
-          **Watch on:** {{ state_attr('sensor.team_tracker', 'broadcast') }}
+          **Watch:** {{ state_attr('sensor.team_tracker', 'broadcast') }}
           {% endif %}
         card_mod:
           style: |
@@ -222,26 +153,19 @@ views:
         name: School Countdown
         icon: mdi:school
 
-      - type: custom:mushroom-template-card
-        primary: Time Until Departure
-        secondary: |
-          {% set countdown = states('sensor.school_departure_countdown') %}
-          {% if countdown == 'departed' %}
-            Already departed!
-          {% elif countdown == 'weekend' %}
-            It's the weekend!
-          {% else %}
-            {{ state_attr('sensor.school_departure_countdown', 'hours_remaining') | int }}h
-            {{ state_attr('sensor.school_departure_countdown', 'minutes_remaining') | int }}m
-            {{ state_attr('sensor.school_departure_countdown', 'seconds_remaining') | int }}s
-          {% endif %}
+      # Timer Bar Card for School Departure
+      - type: custom:timer-bar-card
+        entity: sensor.school_departure_countdown
+        name: Time Until Departure
         icon: mdi:bus-school
-        icon_color: |
-          {% set mins = state_attr('sensor.school_departure_countdown', 'total_minutes_remaining') | int(0) %}
-          {% if mins <= 15 %}red
-          {% elif mins <= 30 %}orange
-          {% elif mins <= 60 %}yellow
-          {% else %}green{% endif %}
+        bar_direction: right
+        bar_radius: 8px
+        bar_height: 12px
+        modifications:
+          - elapsed: 75%
+            bar_foreground: orange
+          - elapsed: 90%
+            bar_foreground: red
         card_mod:
           style: |
             ha-card {
@@ -253,7 +177,7 @@ views:
 
       # Current Time Display
       - type: custom:mushroom-template-card
-        primary: "{{ states('sensor.current_time_display') }}"
+        primary: "{{ now().strftime('%I:%M %p') }}"
         secondary: "{{ now().strftime('%A, %B %d, %Y') }}"
         icon: mdi:clock-outline
         icon_color: blue
