@@ -1,191 +1,260 @@
-title: Family Dashboard
+title: Cohn Family Dashboard
 views:
   - title: Home
     path: home
-    type: custom:grid-layout
-    layout:
-      grid-template-columns: 1fr 1fr 1fr
-      grid-template-rows: auto auto auto
-      grid-gap: 16px
-      padding: 16px
+    type: panel
     badges: []
     cards:
-      # Weather Section
-      - type: custom:bubble-card
-        card_type: separator
-        name: Weather
-        icon: mdi:weather-partly-cloudy
-        styles: |
-          .separator {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-          }
+      - type: custom:layout-card
+        layout_type: custom:grid-layout
+        layout:
+          grid-template-columns: 1fr 1fr
+          grid-gap: 20px
+          padding: 20px
+        cards:
+          # Weather Section
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-title-card
+                title: "🌤️ Weather"
+                subtitle: "What's it like outside?"
+                card_mod:
+                  style: |
+                    ha-card {
+                      --title-font-size: 28px;
+                      --subtitle-font-size: 18px;
+                    }
 
-      # Weather Chart Card - Forecast with chart
-      - type: custom:weather-chart-card
-        entity: weather.forecast_home
-        show_main: true
-        show_temperature: true
-        show_current_condition: true
-        show_attributes: true
-        show_humidity: true
-        show_pressure: true
-        show_wind_direction: true
-        show_wind_speed: true
-        show_sun: true
-        show_forecast: true
-        forecast_type: daily
-        number_of_forecasts: 5
-        card_mod:
-          style: |
-            ha-card {
-              background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.8));
-              border-radius: 20px;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-              backdrop-filter: blur(10px);
-            }
+              # Weather Chart Card
+              - type: custom:weather-chart-card
+                entity: weather.forecast_home
+                show_main: true
+                show_temperature: true
+                show_current_condition: true
+                show_attributes: true
+                show_humidity: true
+                show_pressure: false
+                show_wind_direction: true
+                show_wind_speed: true
+                show_sun: true
+                show_forecast: true
+                forecast_type: daily
+                number_of_forecasts: 5
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: linear-gradient(135deg, #87CEEB, #98FB98);
+                      border-radius: 24px;
+                      border: 3px solid #4CAF50;
+                      font-size: 18px;
+                    }
 
-      # Weather Radar Card - Local radar view
-      - type: custom:weather-radar-card
-        data_source: RainViewer
-        show_marker: true
-        show_range: true
-        show_zoom: true
-        show_recenter: true
-        show_playback: true
-        square_map: false
-        show_scale: true
-        zoom_level: 8
-        center_latitude: 29.6686
-        center_longitude: -95.4838
-        marker_latitude: 29.6686
-        marker_longitude: -95.4838
-        card_mod:
-          style: |
-            ha-card {
-              background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.8));
-              border-radius: 20px;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-              backdrop-filter: blur(10px);
-            }
+              # Weather Radar
+              - type: custom:weather-radar-card
+                data_source: RainViewer
+                show_marker: true
+                show_range: true
+                show_zoom: true
+                show_recenter: true
+                show_playback: true
+                square_map: false
+                show_scale: true
+                zoom_level: 8
+                center_latitude: 29.6686
+                center_longitude: -95.4838
+                marker_latitude: 29.6686
+                marker_longitude: -95.4838
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 24px;
+                      border: 3px solid #2196F3;
+                      overflow: hidden;
+                    }
 
-      # Calendar Section
-      - type: custom:bubble-card
-        card_type: separator
-        name: Calendar
-        icon: mdi:calendar
+          # Calendar Section
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-title-card
+                title: "📅 What's Happening"
+                subtitle: "Family Events This Week"
+                card_mod:
+                  style: |
+                    ha-card {
+                      --title-font-size: 28px;
+                      --subtitle-font-size: 18px;
+                    }
 
-      # Week Planner Card
-      - type: custom:week-planner-card
-        calendars:
-          - entity: calendar.cohn_shared_calendar
-            color: "#6366f1"
-        days: 7
-        startingDay: today
-        hideWeekend: false
-        noCardBackground: false
-        eventBackground: rgba(99, 102, 241, 0.3)
-        showLocation: true
-        showDescription: false
-        locationIcon: mdi:map-marker
-        hidePastEvents: true
-        hideDaysWithoutEvents: false
-        showEventIcon: true
-        showTime: true
-        timeFormat: h:mm A
-        dateFormat: ddd, MMM D
-        card_mod:
-          style: |
-            ha-card {
-              background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.8));
-              border-radius: 20px;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-              backdrop-filter: blur(10px);
-            }
+              - type: custom:week-planner-card
+                calendars:
+                  - entity: calendar.cohn_shared_calendar
+                    color: "#9C27B0"
+                days: 7
+                startingDay: today
+                hideWeekend: false
+                noCardBackground: false
+                eventBackground: "rgba(156, 39, 176, 0.2)"
+                showLocation: true
+                showDescription: false
+                locationIcon: mdi:map-marker
+                hidePastEvents: true
+                hideDaysWithoutEvents: false
+                showEventIcon: true
+                showTime: true
+                timeFormat: h:mm A
+                dateFormat: dddd, MMM D
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: linear-gradient(135deg, #E1BEE7, #F8BBD9);
+                      border-radius: 24px;
+                      border: 3px solid #9C27B0;
+                      font-size: 18px;
+                      --primary-text-color: #4A148C;
+                    }
 
-      # Houston Rockets Section
-      - type: custom:bubble-card
-        card_type: separator
-        name: Houston Rockets
-        icon: mdi:basketball
+          # Rockets Section
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-title-card
+                title: "🏀 Houston Rockets"
+                subtitle: "Go Rockets!"
+                card_mod:
+                  style: |
+                    ha-card {
+                      --title-font-size: 28px;
+                      --subtitle-font-size: 18px;
+                    }
 
-      # Team Tracker Card - Official card for sensor.team_tracker
-      - type: custom:teamtracker-card
-        entity: sensor.team_tracker
-        home_side: left
-        card_mod:
-          style: |
-            ha-card {
-              background: linear-gradient(135deg, rgba(206, 17, 65, 0.3), rgba(196, 206, 211, 0.2));
-              border-radius: 20px;
-              border: 1px solid rgba(206, 17, 65, 0.3);
-              backdrop-filter: blur(10px);
-            }
+              - type: custom:teamtracker-card
+                entity: sensor.team_tracker
+                home_side: left
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: linear-gradient(135deg, #CE1141, #C4CED4);
+                      border-radius: 24px;
+                      border: 3px solid #CE1141;
+                      font-size: 20px;
+                    }
 
-      # Game Details Card
-      - type: markdown
-        content: |
-          {% if state_attr('sensor.team_tracker', 'date') %}
-          **Next Game:** {{ state_attr('sensor.team_tracker', 'date') }}
-          {% endif %}
-          {% if state_attr('sensor.team_tracker', 'kickoff_in') %}
-          **Starts in:** {{ state_attr('sensor.team_tracker', 'kickoff_in') }}
-          {% endif %}
-          {% if state_attr('sensor.team_tracker', 'venue') %}
-          **Venue:** {{ state_attr('sensor.team_tracker', 'venue') }}
-          {% endif %}
-          {% if state_attr('sensor.team_tracker', 'broadcast') %}
-          **Watch:** {{ state_attr('sensor.team_tracker', 'broadcast') }}
-          {% endif %}
-        card_mod:
-          style: |
-            ha-card {
-              background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.8));
-              border-radius: 16px;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-              backdrop-filter: blur(10px);
-            }
+              - type: custom:mushroom-template-card
+                primary: |
+                  {% if state_attr('sensor.team_tracker', 'kickoff_in') %}
+                    ⏰ Game starts {{ state_attr('sensor.team_tracker', 'kickoff_in') }}
+                  {% else %}
+                    🏀 Check back for next game!
+                  {% endif %}
+                secondary: |
+                  {% if state_attr('sensor.team_tracker', 'venue') %}
+                    📍 {{ state_attr('sensor.team_tracker', 'venue') }}
+                  {% endif %}
+                icon: mdi:basketball
+                icon_color: red
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: linear-gradient(135deg, #FFCDD2, #FFEBEE);
+                      border-radius: 20px;
+                      border: 3px solid #F44336;
+                      --card-primary-font-size: 22px;
+                      --card-secondary-font-size: 18px;
+                    }
+                    mushroom-shape-icon {
+                      --shape-color: rgba(244, 67, 54, 0.3) !important;
+                      --icon-size: 32px;
+                    }
 
-      # School Countdown Section
-      - type: custom:bubble-card
-        card_type: separator
-        name: School Countdown
-        icon: mdi:school
+          # School & Time Section
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-title-card
+                title: "🚌 School Time"
+                subtitle: "Don't miss the bus!"
+                card_mod:
+                  style: |
+                    ha-card {
+                      --title-font-size: 28px;
+                      --subtitle-font-size: 18px;
+                    }
 
-      # Timer Bar Card for School Departure
-      - type: custom:timer-bar-card
-        entity: sensor.school_departure_countdown
-        name: Time Until Departure
-        icon: mdi:bus-school
-        bar_direction: right
-        bar_radius: 8px
-        bar_height: 12px
-        modifications:
-          - elapsed: 75%
-            bar_foreground: orange
-          - elapsed: 90%
-            bar_foreground: red
-        card_mod:
-          style: |
-            ha-card {
-              background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.8));
-              border-radius: 16px;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-              backdrop-filter: blur(10px);
-            }
+              # Big Clock Display
+              - type: custom:mushroom-template-card
+                primary: "{{ now().strftime('%I:%M %p') }}"
+                secondary: "{{ now().strftime('%A, %B %d') }}"
+                icon: mdi:clock
+                icon_color: blue
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: linear-gradient(135deg, #BBDEFB, #E3F2FD);
+                      border-radius: 24px;
+                      border: 3px solid #2196F3;
+                      --card-primary-font-size: 48px;
+                      --card-secondary-font-size: 24px;
+                      text-align: center;
+                    }
+                    mushroom-shape-icon {
+                      --shape-color: rgba(33, 150, 243, 0.3) !important;
+                      --icon-size: 48px;
+                    }
 
-      # Current Time Display
-      - type: custom:mushroom-template-card
-        primary: "{{ now().strftime('%I:%M %p') }}"
-        secondary: "{{ now().strftime('%A, %B %d, %Y') }}"
-        icon: mdi:clock-outline
-        icon_color: blue
-        card_mod:
-          style: |
-            ha-card {
-              background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.8));
-              border-radius: 16px;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-              backdrop-filter: blur(10px);
-            }
+              # School Countdown with Timer Bar
+              - type: custom:mushroom-template-card
+                primary: |
+                  {% set countdown = states('sensor.school_departure_countdown') %}
+                  {% if countdown == 'departed' %}
+                    ✅ Already left for school!
+                  {% elif countdown == 'weekend' %}
+                    🎉 It's the weekend! No school!
+                  {% else %}
+                    🚌 Leave in {{ state_attr('sensor.school_departure_countdown', 'hours_remaining') | int }}h {{ state_attr('sensor.school_departure_countdown', 'minutes_remaining') | int }}m
+                  {% endif %}
+                secondary: "Departure time: 7:15 AM"
+                icon: mdi:bus-school
+                icon_color: |
+                  {% set mins = state_attr('sensor.school_departure_countdown', 'total_minutes_remaining') | int(0) %}
+                  {% if mins <= 15 %}red
+                  {% elif mins <= 30 %}orange
+                  {% elif mins <= 60 %}amber
+                  {% else %}green{% endif %}
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: linear-gradient(135deg, #FFF9C4, #FFECB3);
+                      border-radius: 24px;
+                      border: 3px solid #FFC107;
+                      --card-primary-font-size: 28px;
+                      --card-secondary-font-size: 18px;
+                    }
+                    mushroom-shape-icon {
+                      --shape-color: rgba(255, 193, 7, 0.3) !important;
+                      --icon-size: 40px;
+                    }
+
+              # Visual Timer Bar
+              - type: custom:timer-bar-card
+                entity: sensor.school_departure_countdown
+                name: "⏱️ Time Remaining"
+                icon: mdi:timer-sand
+                bar_direction: right
+                bar_radius: 12px
+                bar_height: 24px
+                bar_background: "#E0E0E0"
+                bar_foreground: "#4CAF50"
+                text_width: 0px
+                modifications:
+                  - elapsed: 50%
+                    bar_foreground: "#FFC107"
+                  - elapsed: 75%
+                    bar_foreground: "#FF9800"
+                  - elapsed: 90%
+                    bar_foreground: "#F44336"
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: linear-gradient(135deg, #C8E6C9, #E8F5E9);
+                      border-radius: 20px;
+                      border: 3px solid #4CAF50;
+                      font-size: 20px;
+                    }
