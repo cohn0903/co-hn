@@ -1,0 +1,155 @@
+# Automations for Family Dashboard
+# Add these to your automations.yaml or create via the UI
+
+# School Departure Warning - 15 minutes before
+- id: school_departure_15min_warning
+  alias: "School Departure - 15 Minute Warning"
+  description: "Alert 15 minutes before school departure time"
+  trigger:
+    - platform: template
+      value_template: >
+        {{ state_attr('sensor.school_departure_countdown', 'total_minutes_remaining') | int == 15 }}
+  condition:
+    - condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+  action:
+    - service: light.turn_on
+      target:
+        entity_id: light.kitchen
+      data:
+        color_name: yellow
+        brightness: 255
+    - service: tts.speak
+      target:
+        entity_id: tts.google_en_com
+      data:
+        cache: false
+        media_player_entity_id: media_player.living_room
+        message: "15 minutes until school departure time!"
+  mode: single
+
+# School Departure Warning - 5 minutes before
+- id: school_departure_5min_warning
+  alias: "School Departure - 5 Minute Warning"
+  description: "Alert 5 minutes before school departure time"
+  trigger:
+    - platform: template
+      value_template: >
+        {{ state_attr('sensor.school_departure_countdown', 'total_minutes_remaining') | int == 5 }}
+  condition:
+    - condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+  action:
+    - service: light.turn_on
+      target:
+        entity_id: light.kitchen
+      data:
+        color_name: red
+        brightness: 255
+    - service: tts.speak
+      target:
+        entity_id: tts.google_en_com
+      data:
+        cache: false
+        media_player_entity_id: media_player.living_room
+        message: "5 minutes until school departure! Time to go!"
+  mode: single
+
+# Rockets Game Starting Soon
+- id: rockets_game_starting
+  alias: "Rockets Game Starting Soon"
+  description: "Notify when Rockets game is about to start"
+  trigger:
+    - platform: state
+      entity_id: sensor.team_tracker
+      to: "PRE"
+  condition:
+    - condition: template
+      value_template: >
+        {{ 'Rockets' in state_attr('sensor.team_tracker', 'team_name') | default('', true) }}
+  action:
+    - service: notify.notify
+      data:
+        title: "Rockets Game Starting!"
+        message: >
+          {{ state_attr('sensor.team_tracker', 'team_name') }} vs
+          {{ state_attr('sensor.team_tracker', 'opponent_name') }}
+          starts soon!
+          {% if state_attr('sensor.team_tracker', 'broadcast') %}
+          Watch on {{ state_attr('sensor.team_tracker', 'broadcast') }}
+          {% endif %}
+  mode: single
+
+# Rockets Game In Progress
+- id: rockets_game_live
+  alias: "Rockets Game Live"
+  description: "Notify when Rockets game goes live"
+  trigger:
+    - platform: state
+      entity_id: sensor.team_tracker
+      to: "IN"
+  condition:
+    - condition: template
+      value_template: >
+        {{ 'Rockets' in state_attr('sensor.team_tracker', 'team_name') | default('', true) }}
+  action:
+    - service: notify.notify
+      data:
+        title: "Rockets Game Live!"
+        message: >
+          {{ state_attr('sensor.team_tracker', 'team_name') }}
+          {{ state_attr('sensor.team_tracker', 'team_score') }} -
+          {{ state_attr('sensor.team_tracker', 'opponent_score') }}
+          {{ state_attr('sensor.team_tracker', 'opponent_name') }}
+  mode: single
+
+# Rockets Game Finished
+- id: rockets_game_final
+  alias: "Rockets Game Final"
+  description: "Notify with final score when Rockets game ends"
+  trigger:
+    - platform: state
+      entity_id: sensor.team_tracker
+      to: "POST"
+  condition:
+    - condition: template
+      value_template: >
+        {{ 'Rockets' in state_attr('sensor.team_tracker', 'team_name') | default('', true) }}
+  action:
+    - service: notify.notify
+      data:
+        title: "Rockets Game Final!"
+        message: >
+          Final Score:
+          {{ state_attr('sensor.team_tracker', 'team_name') }}
+          {{ state_attr('sensor.team_tracker', 'team_score') }} -
+          {{ state_attr('sensor.team_tracker', 'opponent_score') }}
+          {{ state_attr('sensor.team_tracker', 'opponent_name') }}
+  mode: single
+
+# Calendar Event Reminder (using cohn_shared_calendar)
+- id: calendar_event_15min_reminder
+  alias: "Calendar Event - 15 Minute Reminder"
+  description: "Remind about upcoming calendar events"
+  trigger:
+    - platform: calendar
+      event: start
+      entity_id: calendar.cohn_shared_calendar
+      offset: "-00:15:00"
+  action:
+    - service: notify.notify
+      data:
+        title: "Upcoming Event"
+        message: "{{ trigger.calendar_event.summary }} starts in 15 minutes"
+  mode: queued
+  max: 10
