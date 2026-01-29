@@ -145,6 +145,7 @@ views:
                   border-radius: 20px;
                   border: 3px solid #03A9F4;
                   font-size: 14px;
+                  height: 180px;
                 }
             view_layout:
               grid-column: span 2
@@ -160,6 +161,7 @@ views:
                   border-radius: 20px;
                   border: 3px solid #CE1141;
                   font-size: 16px;
+                  height: 180px;
                 }
             view_layout:
               grid-column: span 2
@@ -219,7 +221,7 @@ views:
                   border-radius: 20px;
                   border: 3px solid #2196F3;
                   overflow: hidden;
-                  max-height: 250px;
+                  height: 200px;
                 }
             view_layout:
               grid-column: span 2
@@ -244,6 +246,7 @@ views:
                   border-radius: 20px;
                   border: 3px solid #4CAF50;
                   font-size: 18px;
+                  height: 200px;
                 }
             view_layout:
               grid-column: span 2
