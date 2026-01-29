@@ -8,83 +8,163 @@ views:
       - type: custom:layout-card
         layout_type: custom:grid-layout
         layout:
-          grid-template-columns: 1fr 1fr
-          grid-gap: 20px
-          padding: 20px
+          grid-template-columns: 1fr 1fr 1fr 1fr
+          grid-template-rows: auto auto
+          grid-gap: 12px
+          padding: 12px
+          max-height: 100vh
         cards:
-          # Weather Section
-          - type: vertical-stack
+          # Clock - Top Left
+          - type: custom:mushroom-template-card
+            primary: "{{ now().strftime('%I:%M %p') }}"
+            secondary: "{{ now().strftime('%A, %B %d') }}"
+            icon: mdi:clock
+            icon_color: blue
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #BBDEFB, #E3F2FD);
+                  border-radius: 20px;
+                  border: 3px solid #2196F3;
+                  --card-primary-font-size: 42px;
+                  --card-secondary-font-size: 18px;
+                  text-align: center;
+                }
+                mushroom-shape-icon {
+                  --shape-color: rgba(33, 150, 243, 0.3) !important;
+                  --icon-size: 40px;
+                }
+
+          # School Countdown
+          - type: custom:mushroom-template-card
+            primary: |
+              {% set countdown = states('sensor.school_departure_countdown') %}
+              {% if countdown == 'departed' %}
+                ✅ Left for school!
+              {% elif countdown == 'weekend' %}
+                🎉 Weekend!
+              {% else %}
+                🚌 {{ state_attr('sensor.school_departure_countdown', 'hours_remaining') | int }}h {{ state_attr('sensor.school_departure_countdown', 'minutes_remaining') | int }}m to go
+              {% endif %}
+            secondary: "Leave by 7:15 AM"
+            icon: mdi:bus-school
+            icon_color: |
+              {% set mins = state_attr('sensor.school_departure_countdown', 'total_minutes_remaining') | int(0) %}
+              {% if mins <= 15 %}red
+              {% elif mins <= 30 %}orange
+              {% elif mins <= 60 %}amber
+              {% else %}green{% endif %}
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #FFF9C4, #FFECB3);
+                  border-radius: 20px;
+                  border: 3px solid #FFC107;
+                  --card-primary-font-size: 24px;
+                  --card-secondary-font-size: 16px;
+                }
+                mushroom-shape-icon {
+                  --shape-color: rgba(255, 193, 7, 0.3) !important;
+                  --icon-size: 36px;
+                }
+
+          # Weather Current
+          - type: custom:mushroom-template-card
+            primary: "{{ state_attr('weather.forecast_home', 'temperature') }}°F"
+            secondary: "{{ states('weather.forecast_home') | title }}"
+            icon: mdi:weather-partly-cloudy
+            icon_color: |
+              {% set temp = state_attr('weather.forecast_home', 'temperature') | float %}
+              {% if temp > 85 %}red
+              {% elif temp > 70 %}orange
+              {% elif temp > 50 %}green
+              {% else %}blue{% endif %}
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #87CEEB, #98FB98);
+                  border-radius: 20px;
+                  border: 3px solid #4CAF50;
+                  --card-primary-font-size: 36px;
+                  --card-secondary-font-size: 18px;
+                }
+                mushroom-shape-icon {
+                  --shape-color: rgba(76, 175, 80, 0.3) !important;
+                  --icon-size: 40px;
+                }
+
+          # Rockets Quick Status
+          - type: custom:mushroom-template-card
+            primary: |
+              🏀 Rockets
+            secondary: |
+              {% if state_attr('sensor.team_tracker', 'kickoff_in') %}
+                {{ state_attr('sensor.team_tracker', 'kickoff_in') }}
+              {% else %}
+                {{ states('sensor.team_tracker') }}
+              {% endif %}
+            icon: mdi:basketball
+            icon_color: red
+            tap_action:
+              action: more-info
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #FFCDD2, #FFEBEE);
+                  border-radius: 20px;
+                  border: 3px solid #CE1141;
+                  --card-primary-font-size: 28px;
+                  --card-secondary-font-size: 16px;
+                }
+                mushroom-shape-icon {
+                  --shape-color: rgba(206, 17, 65, 0.3) !important;
+                  --icon-size: 36px;
+                }
+
+          # Weather Forecast - spans 2 columns
+          - type: custom:weather-chart-card
+            entity: weather.forecast_home
+            show_main: false
+            show_temperature: true
+            show_current_condition: false
+            show_attributes: false
+            show_humidity: false
+            show_pressure: false
+            show_wind_direction: false
+            show_wind_speed: false
+            show_sun: false
+            show_forecast: true
+            forecast_type: daily
+            number_of_forecasts: 5
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #E1F5FE, #B3E5FC);
+                  border-radius: 20px;
+                  border: 3px solid #03A9F4;
+                  font-size: 14px;
+                }
+            view_layout:
+              grid-column: span 2
+
+          # Rockets Game Card - spans 2 columns
+          - type: custom:teamtracker-card
+            entity: sensor.team_tracker
+            home_side: left
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #CE1141, #C4CED4);
+                  border-radius: 20px;
+                  border: 3px solid #CE1141;
+                  font-size: 16px;
+                }
+            view_layout:
+              grid-column: span 2
+
+          # Calendar - spans all 4 columns
+          - type: horizontal-stack
             cards:
-              - type: custom:mushroom-title-card
-                title: "🌤️ Weather"
-                subtitle: "What's it like outside?"
-                card_mod:
-                  style: |
-                    ha-card {
-                      --title-font-size: 28px;
-                      --subtitle-font-size: 18px;
-                    }
-
-              # Weather Chart Card
-              - type: custom:weather-chart-card
-                entity: weather.forecast_home
-                show_main: true
-                show_temperature: true
-                show_current_condition: true
-                show_attributes: true
-                show_humidity: true
-                show_pressure: false
-                show_wind_direction: true
-                show_wind_speed: true
-                show_sun: true
-                show_forecast: true
-                forecast_type: daily
-                number_of_forecasts: 5
-                card_mod:
-                  style: |
-                    ha-card {
-                      background: linear-gradient(135deg, #87CEEB, #98FB98);
-                      border-radius: 24px;
-                      border: 3px solid #4CAF50;
-                      font-size: 18px;
-                    }
-
-              # Weather Radar
-              - type: custom:weather-radar-card
-                data_source: RainViewer
-                show_marker: true
-                show_range: true
-                show_zoom: true
-                show_recenter: true
-                show_playback: true
-                square_map: false
-                show_scale: true
-                zoom_level: 8
-                center_latitude: 29.6686
-                center_longitude: -95.4838
-                marker_latitude: 29.6686
-                marker_longitude: -95.4838
-                card_mod:
-                  style: |
-                    ha-card {
-                      border-radius: 24px;
-                      border: 3px solid #2196F3;
-                      overflow: hidden;
-                    }
-
-          # Calendar Section
-          - type: vertical-stack
-            cards:
-              - type: custom:mushroom-title-card
-                title: "📅 What's Happening"
-                subtitle: "Family Events This Week"
-                card_mod:
-                  style: |
-                    ha-card {
-                      --title-font-size: 28px;
-                      --subtitle-font-size: 18px;
-                    }
-
               - type: custom:week-planner-card
                 calendars:
                   - entity: calendar.cohn_shared_calendar
@@ -94,152 +174,72 @@ views:
                 hideWeekend: false
                 noCardBackground: false
                 eventBackground: "rgba(156, 39, 176, 0.2)"
-                showLocation: true
+                showLocation: false
                 showDescription: false
-                locationIcon: mdi:map-marker
                 hidePastEvents: true
                 hideDaysWithoutEvents: false
-                showEventIcon: true
+                showEventIcon: false
                 showTime: true
                 timeFormat: h:mm A
-                dateFormat: dddd, MMM D
+                dateFormat: ddd M/D
+                compact: true
                 card_mod:
                   style: |
                     ha-card {
-                      background: linear-gradient(135deg, #E1BEE7, #F8BBD9);
-                      border-radius: 24px;
+                      background: linear-gradient(135deg, #F3E5F5, #E1BEE7);
+                      border-radius: 20px;
                       border: 3px solid #9C27B0;
-                      font-size: 18px;
+                      font-size: 14px;
                       --primary-text-color: #4A148C;
                     }
+            view_layout:
+              grid-column: span 4
 
-          # Rockets Section
+          # Weather Radar - spans 2 columns
+          - type: custom:weather-radar-card
+            data_source: RainViewer
+            show_marker: true
+            show_range: false
+            show_zoom: true
+            show_recenter: false
+            show_playback: true
+            square_map: true
+            show_scale: false
+            zoom_level: 7
+            center_latitude: 29.6686
+            center_longitude: -95.4838
+            marker_latitude: 29.6686
+            marker_longitude: -95.4838
+            frame_count: 6
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 20px;
+                  border: 3px solid #2196F3;
+                  overflow: hidden;
+                  max-height: 250px;
+                }
+            view_layout:
+              grid-column: span 2
+
+          # Timer Bar - spans 2 columns
           - type: vertical-stack
             cards:
               - type: custom:mushroom-title-card
-                title: "🏀 Houston Rockets"
-                subtitle: "Go Rockets!"
+                title: "⏱️ School Countdown"
                 card_mod:
                   style: |
                     ha-card {
-                      --title-font-size: 28px;
-                      --subtitle-font-size: 18px;
+                      --title-font-size: 20px;
+                      padding: 0;
                     }
-
-              - type: custom:teamtracker-card
-                entity: sensor.team_tracker
-                home_side: left
-                card_mod:
-                  style: |
-                    ha-card {
-                      background: linear-gradient(135deg, #CE1141, #C4CED4);
-                      border-radius: 24px;
-                      border: 3px solid #CE1141;
-                      font-size: 20px;
-                    }
-
-              - type: custom:mushroom-template-card
-                primary: |
-                  {% if state_attr('sensor.team_tracker', 'kickoff_in') %}
-                    ⏰ Game starts {{ state_attr('sensor.team_tracker', 'kickoff_in') }}
-                  {% else %}
-                    🏀 Check back for next game!
-                  {% endif %}
-                secondary: |
-                  {% if state_attr('sensor.team_tracker', 'venue') %}
-                    📍 {{ state_attr('sensor.team_tracker', 'venue') }}
-                  {% endif %}
-                icon: mdi:basketball
-                icon_color: red
-                card_mod:
-                  style: |
-                    ha-card {
-                      background: linear-gradient(135deg, #FFCDD2, #FFEBEE);
-                      border-radius: 20px;
-                      border: 3px solid #F44336;
-                      --card-primary-font-size: 22px;
-                      --card-secondary-font-size: 18px;
-                    }
-                    mushroom-shape-icon {
-                      --shape-color: rgba(244, 67, 54, 0.3) !important;
-                      --icon-size: 32px;
-                    }
-
-          # School & Time Section
-          - type: vertical-stack
-            cards:
-              - type: custom:mushroom-title-card
-                title: "🚌 School Time"
-                subtitle: "Don't miss the bus!"
-                card_mod:
-                  style: |
-                    ha-card {
-                      --title-font-size: 28px;
-                      --subtitle-font-size: 18px;
-                    }
-
-              # Big Clock Display
-              - type: custom:mushroom-template-card
-                primary: "{{ now().strftime('%I:%M %p') }}"
-                secondary: "{{ now().strftime('%A, %B %d') }}"
-                icon: mdi:clock
-                icon_color: blue
-                card_mod:
-                  style: |
-                    ha-card {
-                      background: linear-gradient(135deg, #BBDEFB, #E3F2FD);
-                      border-radius: 24px;
-                      border: 3px solid #2196F3;
-                      --card-primary-font-size: 48px;
-                      --card-secondary-font-size: 24px;
-                      text-align: center;
-                    }
-                    mushroom-shape-icon {
-                      --shape-color: rgba(33, 150, 243, 0.3) !important;
-                      --icon-size: 48px;
-                    }
-
-              # School Countdown with Timer Bar
-              - type: custom:mushroom-template-card
-                primary: |
-                  {% set countdown = states('sensor.school_departure_countdown') %}
-                  {% if countdown == 'departed' %}
-                    ✅ Already left for school!
-                  {% elif countdown == 'weekend' %}
-                    🎉 It's the weekend! No school!
-                  {% else %}
-                    🚌 Leave in {{ state_attr('sensor.school_departure_countdown', 'hours_remaining') | int }}h {{ state_attr('sensor.school_departure_countdown', 'minutes_remaining') | int }}m
-                  {% endif %}
-                secondary: "Departure time: 7:15 AM"
-                icon: mdi:bus-school
-                icon_color: |
-                  {% set mins = state_attr('sensor.school_departure_countdown', 'total_minutes_remaining') | int(0) %}
-                  {% if mins <= 15 %}red
-                  {% elif mins <= 30 %}orange
-                  {% elif mins <= 60 %}amber
-                  {% else %}green{% endif %}
-                card_mod:
-                  style: |
-                    ha-card {
-                      background: linear-gradient(135deg, #FFF9C4, #FFECB3);
-                      border-radius: 24px;
-                      border: 3px solid #FFC107;
-                      --card-primary-font-size: 28px;
-                      --card-secondary-font-size: 18px;
-                    }
-                    mushroom-shape-icon {
-                      --shape-color: rgba(255, 193, 7, 0.3) !important;
-                      --icon-size: 40px;
-                    }
-
-              # Visual Timer Bar
               - type: custom:timer-bar-card
                 entity: sensor.school_departure_countdown
-                name: "⏱️ Time Remaining"
+                name: ""
                 icon: mdi:timer-sand
                 bar_direction: right
-                bar_radius: 12px
-                bar_height: 24px
+                bar_radius: 10px
+                bar_height: 30px
                 bar_background: "#E0E0E0"
                 bar_foreground: "#4CAF50"
                 text_width: 0px
@@ -256,5 +256,6 @@ views:
                       background: linear-gradient(135deg, #C8E6C9, #E8F5E9);
                       border-radius: 20px;
                       border: 3px solid #4CAF50;
-                      font-size: 20px;
                     }
+            view_layout:
+              grid-column: span 2
