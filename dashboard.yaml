@@ -26,9 +26,9 @@ views:
                   background: linear-gradient(135deg, #BBDEFB, #E3F2FD);
                   border-radius: 20px;
                   border: 3px solid #2196F3;
-                  --card-primary-font-size: 42px;
-                  --card-secondary-font-size: 18px;
-                  text-align: center;
+                  height: 120px;
+                  --card-primary-font-size: 32px;
+                  --card-secondary-font-size: 16px;
                 }
                 mushroom-shape-icon {
                   --shape-color: rgba(33, 150, 243, 0.3) !important;
@@ -44,7 +44,7 @@ views:
               {% elif countdown == 'weekend' %}
                 🎉 Weekend!
               {% else %}
-                🚌 {{ state_attr('sensor.school_departure_countdown', 'hours_remaining') | int }}h {{ state_attr('sensor.school_departure_countdown', 'minutes_remaining') | int }}m to go
+                🚌 {{ state_attr('sensor.school_departure_countdown', 'hours_remaining') | int }}h {{ state_attr('sensor.school_departure_countdown', 'minutes_remaining') | int }}m
               {% endif %}
             secondary: "Leave by 7:15 AM"
             icon: mdi:bus-school
@@ -60,12 +60,13 @@ views:
                   background: linear-gradient(135deg, #FFF9C4, #FFECB3);
                   border-radius: 20px;
                   border: 3px solid #FFC107;
-                  --card-primary-font-size: 24px;
+                  height: 120px;
+                  --card-primary-font-size: 32px;
                   --card-secondary-font-size: 16px;
                 }
                 mushroom-shape-icon {
                   --shape-color: rgba(255, 193, 7, 0.3) !important;
-                  --icon-size: 36px;
+                  --icon-size: 40px;
                 }
 
           # Weather Current
@@ -85,8 +86,9 @@ views:
                   background: linear-gradient(135deg, #87CEEB, #98FB98);
                   border-radius: 20px;
                   border: 3px solid #4CAF50;
-                  --card-primary-font-size: 36px;
-                  --card-secondary-font-size: 18px;
+                  height: 120px;
+                  --card-primary-font-size: 32px;
+                  --card-secondary-font-size: 16px;
                 }
                 mushroom-shape-icon {
                   --shape-color: rgba(76, 175, 80, 0.3) !important;
@@ -95,8 +97,7 @@ views:
 
           # Rockets Quick Status
           - type: custom:mushroom-template-card
-            primary: |
-              🏀 Rockets
+            primary: "🏀 Rockets"
             secondary: |
               {% if state_attr('sensor.team_tracker', 'kickoff_in') %}
                 {{ state_attr('sensor.team_tracker', 'kickoff_in') }}
@@ -113,12 +114,13 @@ views:
                   background: linear-gradient(135deg, #FFCDD2, #FFEBEE);
                   border-radius: 20px;
                   border: 3px solid #CE1141;
-                  --card-primary-font-size: 28px;
+                  height: 120px;
+                  --card-primary-font-size: 32px;
                   --card-secondary-font-size: 16px;
                 }
                 mushroom-shape-icon {
                   --shape-color: rgba(206, 17, 65, 0.3) !important;
-                  --icon-size: 36px;
+                  --icon-size: 40px;
                 }
 
           # Weather Forecast - spans 2 columns
