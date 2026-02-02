@@ -199,7 +199,7 @@ views:
             view_layout:
               grid-column: span 4
 
-          # Weather Radar - spans 2 columns
+          # Weather Radar - spans all 4 columns
           - type: custom:weather-radar-card
             data_source: RainViewer
             show_marker: true
@@ -207,7 +207,7 @@ views:
             show_zoom: true
             show_recenter: false
             show_playback: true
-            square_map: true
+            square_map: false
             show_scale: false
             zoom_level: 7
             center_latitude: 29.6686
@@ -224,29 +224,4 @@ views:
                   height: 200px;
                 }
             view_layout:
-              grid-column: span 2
-
-          # Countdown Gauge - spans 2 columns
-          - type: gauge
-            entity: sensor.school_departure_countdown
-            attribute: percentage_remaining
-            name: "⏱️ Time Remaining"
-            unit: "%"
-            min: 0
-            max: 100
-            needle: true
-            severity:
-              green: 50
-              yellow: 25
-              red: 10
-            card_mod:
-              style: |
-                ha-card {
-                  background: linear-gradient(135deg, #C8E6C9, #E8F5E9);
-                  border-radius: 20px;
-                  border: 3px solid #4CAF50;
-                  font-size: 18px;
-                  height: 200px;
-                }
-            view_layout:
-              grid-column: span 2
+              grid-column: span 4
