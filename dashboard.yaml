@@ -199,28 +199,28 @@ views:
             view_layout:
               grid-column: span 4
 
-          # Weather Radar - spans all 4 columns
-          - type: custom:weather-radar-card
-            data_source: RainViewer
-            show_marker: true
-            show_range: false
-            show_zoom: true
-            show_recenter: false
-            show_playback: true
-            square_map: false
-            show_scale: false
-            zoom_level: 7
-            center_latitude: 29.6686
-            center_longitude: -95.4838
-            marker_latitude: 29.6686
-            marker_longitude: -95.4838
-            frame_count: 6
+          # Weekly Weather Forecast - spans all 4 columns
+          - type: custom:weather-chart-card
+            entity: weather.forecast_home
+            show_main: true
+            show_temperature: true
+            show_current_condition: true
+            show_attributes: true
+            show_humidity: true
+            show_pressure: false
+            show_wind_direction: true
+            show_wind_speed: true
+            show_sun: true
+            show_forecast: true
+            forecast_type: daily
+            number_of_forecasts: 7
             card_mod:
               style: |
                 ha-card {
+                  background: linear-gradient(135deg, #E1F5FE, #B3E5FC);
                   border-radius: 20px;
-                  border: 3px solid #2196F3;
-                  overflow: hidden;
+                  border: 3px solid #03A9F4;
+                  font-size: 16px;
                   height: 200px;
                 }
             view_layout:
