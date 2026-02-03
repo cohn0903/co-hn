@@ -8,7 +8,7 @@ views:
       - type: custom:layout-card
         layout_type: custom:grid-layout
         layout:
-          grid-template-columns: 1fr 1fr 1fr 1fr
+          grid-template-columns: 1fr 1fr 1fr
           grid-template-rows: auto auto
           grid-gap: 16px
           padding: 16px
@@ -130,68 +130,7 @@ views:
                   --icon-size: 50px;
                 }
 
-          # Rockets - Fun for kids
-          - type: custom:mushroom-template-card
-            primary: "🚀 ROCKETS!"
-            secondary: |
-              {% set state = states('sensor.team_tracker') %}
-              {% if state == 'IN' %}
-                🏀 GAME ON!
-              {% elif state_attr('sensor.team_tracker', 'kickoff_in') %}
-                ⏰ {{ state_attr('sensor.team_tracker', 'kickoff_in') }}
-              {% else %}
-                {{ state }}
-              {% endif %}
-            icon: mdi:basketball
-            icon_color: red
-            tap_action:
-              action: more-info
-            card_mod:
-              style: |
-                ha-card {
-                  background: linear-gradient(135deg, #EF5350, #E53935);
-                  border-radius: 24px;
-                  border: 4px solid #C62828;
-                  height: 140px;
-                  --card-primary-font-size: 36px;
-                  --card-secondary-font-size: 20px;
-                  --primary-text-color: white;
-                  --secondary-text-color: #FFCDD2;
-                }
-                mushroom-shape-icon {
-                  --shape-color: rgba(255, 255, 255, 0.3) !important;
-                  --icon-size: 50px;
-                  --icon-color: white !important;
-                }
-
-          # Weather Forecast - spans 2 columns
-          - type: custom:weather-chart-card
-            entity: weather.forecast_home
-            show_main: false
-            show_temperature: true
-            show_current_condition: false
-            show_attributes: false
-            show_humidity: false
-            show_pressure: false
-            show_wind_direction: false
-            show_wind_speed: false
-            show_sun: false
-            show_forecast: true
-            forecast_type: daily
-            number_of_forecasts: 5
-            card_mod:
-              style: |
-                ha-card {
-                  background: linear-gradient(135deg, #B3E5FC, #81D4FA);
-                  border-radius: 24px;
-                  border: 4px solid #29B6F6;
-                  font-size: 16px;
-                  height: 180px;
-                }
-            view_layout:
-              grid-column: span 2
-
-          # Rockets Game Card - spans 2 columns
+          # Rockets Game Card - spans 3 columns
           - type: custom:teamtracker-card
             entity: sensor.team_tracker
             home_side: left
@@ -205,9 +144,9 @@ views:
                   height: 180px;
                 }
             view_layout:
-              grid-column: span 2
+              grid-column: span 3
 
-          # Calendar - spans all 4 columns
+          # Calendar - spans all 3 columns
           - type: horizontal-stack
             cards:
               - type: custom:week-planner-card
@@ -238,9 +177,9 @@ views:
                       --primary-text-color: white;
                     }
             view_layout:
-              grid-column: span 4
+              grid-column: span 3
 
-          # Weekly Weather Forecast - spans all 4 columns
+          # Weekly Weather Forecast - spans all 3 columns
           - type: custom:weather-chart-card
             entity: weather.forecast_home
             show_main: true
@@ -265,4 +204,4 @@ views:
                   height: 200px;
                 }
             view_layout:
-              grid-column: span 4
+              grid-column: span 3
