@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Typer - Defend Earth!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            height: 100vh;
+            background: linear-gradient(to bottom, #000010 0%, #000030 50%, #000020 100%);
+            overflow: hidden;
+            border-left: 3px solid #0a0;
+            border-right: 3px solid #0a0;
+        }
+
+        #starfield {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            text-shadow: 0 0 10px #0f0;
+            z-index: 100;
+        }
+
+        .hud-item {
+            background: rgba(0, 50, 0, 0.7);
+            padding: 8px 15px;
+            border: 2px solid #0f0;
+            border-radius: 5px;
+        }
+
+        #game-area {
+            position: absolute;
+            top: 60px;
+            bottom: 120px;
+            left: 0;
+            right: 0;
+        }
+
+        .asteroid {
+            position: absolute;
+            text-align: center;
+            animation: descend linear;
+            z-index: 10;
+        }
+
+        .asteroid-body {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(ellipse at 30% 30%, #888, #333);
+            border-radius: 50% 45% 55% 48%;
+            margin: 0 auto;
+            box-shadow:
+                inset -5px -5px 15px rgba(0,0,0,0.5),
+                0 0 20px rgba(255, 100, 0, 0.3);
+            position: relative;
+        }
+
+        .asteroid-body::before {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: #555;
+            border-radius: 50%;
+            top: 10px;
+            left: 15px;
+            box-shadow:
+                20px 25px 0 8px #444,
+                5px 35px 0 5px #4a4a4a;
+        }
+
+        .asteroid-word {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ff0;
+            text-shadow: 0 0 10px #ff0, 0 0 20px #f80;
+            margin-top: 5px;
+            letter-spacing: 2px;
+        }
+
+        .asteroid-word .typed {
+            color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .asteroid-word .current {
+            color: #fff;
+            text-decoration: underline;
+        }
+
+        @keyframes descend {
+            from { top: -100px; }
+            to { top: calc(100% + 100px); }
+        }
+
+        #input-area {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 100;
+        }
+
+        #typing-input {
+            background: rgba(0, 30, 0, 0.9);
+            border: 3px solid #0f0;
+            color: #0f0;
+            font-size: 24px;
+            font-family: 'Courier New', monospace;
+            padding: 10px 20px;
+            width: 300px;
+            text-align: center;
+            outline: none;
+            text-transform: lowercase;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        #typing-input:focus {
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+        }
+
+        #spaceship {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 40px;
+            z-index: 50;
+        }
+
+        #spaceship::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-bottom: 40px solid #0a0;
+            filter: drop-shadow(0 0 10px #0f0);
+        }
+
+        #spaceship::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 15px;
+            background: linear-gradient(to bottom, #f80, #ff0, #fff);
+            clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+            animation: thruster 0.1s infinite alternate;
+        }
+
+        @keyframes thruster {
+            from { opacity: 0.8; height: 15px; }
+            to { opacity: 1; height: 20px; }
+        }
+
+        .laser {
+            position: absolute;
+            width: 4px;
+            height: 30px;
+            background: linear-gradient(to top, #0f0, #fff);
+            box-shadow: 0 0 10px #0f0;
+            animation: shoot 0.3s linear forwards;
+            z-index: 5;
+        }
+
+        @keyframes shoot {
+            from { bottom: 120px; opacity: 1; }
+            to { bottom: 100%; opacity: 0; }
+        }
+
+        .explosion {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .explosion-particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff0;
+            border-radius: 50%;
+            animation: explode 0.5s ease-out forwards;
+        }
+
+        @keyframes explode {
+            from {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            to {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #game-over-screen {
+            display: none;
+        }
+
+        .title {
+            font-size: 48px;
+            color: #0f0;
+            text-shadow: 0 0 20px #0f0, 0 0 40px #0a0;
+            margin-bottom: 20px;
+            letter-spacing: 5px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { text-shadow: 0 0 20px #0f0, 0 0 40px #0a0; }
+            50% { text-shadow: 0 0 40px #0f0, 0 0 80px #0a0, 0 0 100px #080; }
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #0a0;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            background: transparent;
+            border: 3px solid #0f0;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            padding: 15px 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .btn:hover {
+            background: #0f0;
+            color: #000;
+            box-shadow: 0 0 30px #0f0;
+        }
+
+        .instructions {
+            margin-top: 40px;
+            text-align: center;
+            color: #080;
+            line-height: 1.8;
+        }
+
+        .final-score {
+            font-size: 36px;
+            color: #ff0;
+            margin: 20px 0;
+            text-shadow: 0 0 20px #ff0;
+        }
+
+        #combo-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            color: #f80;
+            text-shadow: 0 0 30px #f80;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 200;
+            transition: opacity 0.3s;
+        }
+
+        .shield-bar {
+            width: 100px;
+            height: 10px;
+            background: #300;
+            border: 1px solid #f00;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+
+        .shield-fill {
+            height: 100%;
+            background: #f00;
+            transition: width 0.3s;
+        }
+
+        #level-up {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: #0ff;
+            text-shadow: 0 0 30px #0ff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 200;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="starfield"></div>
+
+        <div id="hud">
+            <div class="hud-item">SCORE: <span id="score">0</span></div>
+            <div class="hud-item">LEVEL: <span id="level">1</span></div>
+            <div class="hud-item">COMBO: <span id="combo">0</span>x</div>
+            <div class="hud-item">
+                SHIELDS:
+                <div class="shield-bar">
+                    <div class="shield-fill" id="shield-fill" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-area"></div>
+
+        <div id="combo-display"></div>
+        <div id="level-up">LEVEL UP!</div>
+
+        <div id="spaceship"></div>
+
+        <div id="input-area">
+            <input type="text" id="typing-input" placeholder="Type to destroy!" autocomplete="off" autofocus>
+        </div>
+
+        <div id="start-screen">
+            <div class="title">SPACE TYPER</div>
+            <div class="subtitle">Defend Earth from the Asteroid Invasion!</div>
+            <button class="btn" id="start-btn">START MISSION</button>
+            <div class="instructions">
+                <p>Type the words on the asteroids to destroy them</p>
+                <p>Don't let them reach your ship!</p>
+                <p>Build combos for bonus points</p>
+            </div>
+        </div>
+
+        <div id="game-over-screen">
+            <div class="title" style="color: #f00; text-shadow: 0 0 20px #f00;">GAME OVER</div>
+            <div class="subtitle">Earth's defenses have fallen...</div>
+            <div class="final-score">Final Score: <span id="final-score">0</span></div>
+            <div class="subtitle">Level Reached: <span id="final-level">1</span></div>
+            <button class="btn" id="restart-btn">TRY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // ATARI-STYLE SOUND ENGINE using Web Audio API
+        // ============================================
+        class AtariSoundEngine {
+            constructor() {
+                this.audioContext = null;
+                this.initialized = false;
+            }
+
+            init() {
+                if (this.initialized) return;
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                this.initialized = true;
+            }
+
+            // Classic Atari laser/shoot sound
+            playShoot() {
+                if (!this.initialized) return;
+                const ctx = this.audioContext;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.1);
+
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.1);
+            }
+
+            // Explosion sound - low rumble with noise
+            playExplosion() {
+                if (!this.initialized) return;
+                const ctx = this.audioContext;
+
+                // Create noise
+                const bufferSize = ctx.sampleRate * 0.3;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const noiseGain = ctx.createGain();
+                const noiseFilter = ctx.createBiquadFilter();
+
+                noiseFilter.type = 'lowpass';
+                noiseFilter.frequency.setValueAtTime(1000, ctx.currentTime);
+                noiseFilter.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.3);
+
+                noise.connect(noiseFilter);
+                noiseFilter.connect(noiseGain);
+                noiseGain.connect(ctx.destination);
+
+                noiseGain.gain.setValueAtTime(0.4, ctx.currentTime);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+                noise.start(ctx.currentTime);
+                noise.stop(ctx.currentTime + 0.3);
+
+                // Add low frequency thump
+                const osc = ctx.createOscillator();
+                const oscGain = ctx.createGain();
+
+                osc.connect(oscGain);
+                oscGain.connect(ctx.destination);
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.2);
+
+                oscGain.gain.setValueAtTime(0.5, ctx.currentTime);
+                oscGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.2);
+            }
+
+            // Correct letter typed - high pitched blip
+            playTyping() {
+                if (!this.initialized) return;
+                const ctx = this.audioContext;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(660, ctx.currentTime);
+
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.05);
+            }
+
+            // Wrong key - error buzz
+            playError() {
+                if (!this.initialized) return;
+                const ctx = this.audioContext;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(80, ctx.currentTime);
+
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.15);
+            }
+
+            // Combo bonus sound - ascending arpeggio
+            playCombo() {
+                if (!this.initialized) return;
+                const ctx = this.audioContext;
+                const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+
+                notes.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.05);
+
+                    gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.05);
+                    gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + i * 0.05 + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.05 + 0.1);
+
+                    osc.start(ctx.currentTime + i * 0.05);
+                    osc.stop(ctx.currentTime + i * 0.05 + 0.1);
+                });
+            }
+
+            // Level up fanfare
+            playLevelUp() {
+                if (!this.initialized) return;
+                const ctx = this.audioContext;
+                const notes = [262, 330, 392, 523, 659, 784, 1047];
+
+                notes.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
+
+                    gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.08);
+                    gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + i * 0.08 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.08 + 0.15);
+
+                    osc.start(ctx.currentTime + i * 0.08);
+                    osc.stop(ctx.currentTime + i * 0.08 + 0.15);
+                });
+            }
+
+            // Game over - descending doom
+            playGameOver() {
+                if (!this.initialized) return;
+                const ctx = this.audioContext;
+                const notes = [392, 370, 349, 330, 311, 294, 277, 262, 247, 220, 196, 165, 131];
+
+                notes.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.1);
+
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.15);
+
+                    osc.start(ctx.currentTime + i * 0.1);
+                    osc.stop(ctx.currentTime + i * 0.1 + 0.15);
+                });
+            }
+
+            // Start game jingle
+            playStart() {
+                if (!this.initialized) return;
+                const ctx = this.audioContext;
+                const notes = [262, 330, 392, 523];
+
+                notes.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+
+                    gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.15);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.2);
+
+                    osc.start(ctx.currentTime + i * 0.15);
+                    osc.stop(ctx.currentTime + i * 0.15 + 0.2);
+                });
+            }
+
+            // Damage taken
+            playDamage() {
+                if (!this.initialized) return;
+                const ctx = this.audioContext;
+
+                for (let i = 0; i < 3; i++) {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(100 + Math.random() * 100, ctx.currentTime + i * 0.05);
+
+                    gain.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.05 + 0.1);
+
+                    osc.start(ctx.currentTime + i * 0.05);
+                    osc.stop(ctx.currentTime + i * 0.05 + 0.1);
+                }
+            }
+        }
+
+        // ============================================
+        // GAME ENGINE
+        // ============================================
+        class SpaceTyper {
+            constructor() {
+                this.sound = new AtariSoundEngine();
+                this.gameArea = document.getElementById('game-area');
+                this.input = document.getElementById('typing-input');
+                this.scoreDisplay = document.getElementById('score');
+                this.levelDisplay = document.getElementById('level');
+                this.comboDisplay = document.getElementById('combo');
+                this.comboPopup = document.getElementById('combo-display');
+                this.shieldFill = document.getElementById('shield-fill');
+                this.levelUpDisplay = document.getElementById('level-up');
+                this.startScreen = document.getElementById('start-screen');
+                this.gameOverScreen = document.getElementById('game-over-screen');
+                this.finalScoreDisplay = document.getElementById('final-score');
+                this.finalLevelDisplay = document.getElementById('final-level');
+
+                this.words = [
+                    // Level 1 - Easy (3-4 letters)
+                    ['cat', 'dog', 'run', 'sun', 'moon', 'star', 'fire', 'ice', 'red', 'blue'],
+                    // Level 2 - Medium (4-5 letters)
+                    ['space', 'laser', 'alien', 'comet', 'orbit', 'planet', 'rocket', 'blast', 'speed'],
+                    // Level 3 - Harder (5-6 letters)
+                    ['galaxy', 'nebula', 'quasar', 'meteor', 'saturn', 'cosmic', 'plasma', 'photon'],
+                    // Level 4 - Advanced (6-7 letters)
+                    ['asteroid', 'starship', 'wormhole', 'gravity', 'eclipse', 'jupiter', 'mission'],
+                    // Level 5+ - Expert (7+ letters)
+                    ['supernova', 'astronaut', 'satellite', 'spaceship', 'interstellar', 'hyperdrive', 'telescope']
+                ];
+
+                this.asteroids = [];
+                this.score = 0;
+                this.level = 1;
+                this.combo = 0;
+                this.maxCombo = 0;
+                this.shields = 3;
+                this.maxShields = 3;
+                this.gameRunning = false;
+                this.spawnInterval = null;
+                this.gameLoop = null;
+                this.wordsDestroyed = 0;
+                this.wordsPerLevel = 10;
+
+                this.baseSpeed = 15000; // ms for asteroid to fall
+                this.spawnRate = 3000; // ms between spawns
+
+                this.setupEventListeners();
+                this.createStarfield();
+            }
+
+            createStarfield() {
+                const starfield = document.getElementById('starfield');
+                for (let i = 0; i < 100; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.top = Math.random() * 100 + '%';
+                    star.style.width = (Math.random() * 3 + 1) + 'px';
+                    star.style.height = star.style.width;
+                    star.style.animationDelay = Math.random() * 2 + 's';
+                    starfield.appendChild(star);
+                }
+            }
+
+            setupEventListeners() {
+                document.getElementById('start-btn').addEventListener('click', () => this.startGame());
+                document.getElementById('restart-btn').addEventListener('click', () => this.startGame());
+
+                this.input.addEventListener('input', (e) => this.handleInput(e));
+                this.input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.input.value = '';
+                    }
+                });
+
+                // Focus input when clicking anywhere
+                document.addEventListener('click', () => {
+                    if (this.gameRunning) {
+                        this.input.focus();
+                    }
+                });
+            }
+
+            startGame() {
+                this.sound.init();
+                this.sound.playStart();
+
+                // Reset state
+                this.score = 0;
+                this.level = 1;
+                this.combo = 0;
+                this.shields = 3;
+                this.wordsDestroyed = 0;
+                this.asteroids = [];
+
+                // Clear any existing asteroids
+                this.gameArea.innerHTML = '';
+
+                // Update displays
+                this.updateHUD();
+
+                // Hide screens
+                this.startScreen.style.display = 'none';
+                this.gameOverScreen.style.display = 'none';
+
+                // Start game
+                this.gameRunning = true;
+                this.input.value = '';
+                this.input.focus();
+
+                // Start spawning
+                this.scheduleNextSpawn();
+
+                // Start game loop
+                this.gameLoop = requestAnimationFrame(() => this.update());
+            }
+
+            scheduleNextSpawn() {
+                if (!this.gameRunning) return;
+
+                const variance = Math.random() * 1000 - 500;
+                const rate = Math.max(800, this.spawnRate - (this.level - 1) * 300);
+
+                this.spawnInterval = setTimeout(() => {
+                    this.spawnAsteroid();
+                    this.scheduleNextSpawn();
+                }, rate + variance);
+            }
+
+            spawnAsteroid() {
+                if (!this.gameRunning) return;
+
+                const wordList = this.words[Math.min(this.level - 1, this.words.length - 1)];
+                const word = wordList[Math.floor(Math.random() * wordList.length)];
+
+                // Avoid duplicate words
+                if (this.asteroids.some(a => a.word === word)) {
+                    const altWord = wordList[Math.floor(Math.random() * wordList.length)];
+                    if (this.asteroids.some(a => a.word === altWord)) {
+                        return; // Skip this spawn
+                    }
+                }
+
+                const asteroid = document.createElement('div');
+                asteroid.className = 'asteroid';
+
+                const body = document.createElement('div');
+                body.className = 'asteroid-body';
+
+                const wordDisplay = document.createElement('div');
+                wordDisplay.className = 'asteroid-word';
+                wordDisplay.textContent = word;
+
+                asteroid.appendChild(body);
+                asteroid.appendChild(wordDisplay);
+
+                // Random horizontal position
+                const maxX = this.gameArea.clientWidth - 80;
+                const x = Math.random() * maxX + 10;
+                asteroid.style.left = x + 'px';
+
+                // Speed based on level
+                const speed = Math.max(5000, this.baseSpeed - (this.level - 1) * 1500);
+                asteroid.style.animationDuration = speed + 'ms';
+
+                this.gameArea.appendChild(asteroid);
+
+                this.asteroids.push({
+                    element: asteroid,
+                    word: word,
+                    typed: 0,
+                    wordDisplay: wordDisplay,
+                    startTime: Date.now(),
+                    duration: speed
+                });
+            }
+
+            handleInput(e) {
+                if (!this.gameRunning) return;
+
+                const typed = this.input.value.toLowerCase();
+
+                // Find matching asteroid
+                let matched = null;
+                for (const asteroid of this.asteroids) {
+                    if (asteroid.word.startsWith(typed)) {
+                        matched = asteroid;
+                        break;
+                    }
+                }
+
+                if (matched) {
+                    // Update typed progress
+                    const prevTyped = matched.typed;
+                    matched.typed = typed.length;
+
+                    // Play sound for new correct letters
+                    if (typed.length > prevTyped) {
+                        this.sound.playTyping();
+                        this.fireLaser();
+                    }
+
+                    // Update display
+                    this.updateAsteroidDisplay(matched);
+
+                    // Check if word is complete
+                    if (typed === matched.word) {
+                        this.destroyAsteroid(matched);
+                        this.input.value = '';
+                    }
+                } else if (typed.length > 0) {
+                    // No match - error
+                    this.sound.playError();
+                    this.combo = 0;
+                    this.updateHUD();
+                }
+            }
+
+            updateAsteroidDisplay(asteroid) {
+                const word = asteroid.word;
+                const typed = asteroid.typed;
+
+                let html = '';
+                for (let i = 0; i < word.length; i++) {
+                    if (i < typed) {
+                        html += `<span class="typed">${word[i]}</span>`;
+                    } else if (i === typed) {
+                        html += `<span class="current">${word[i]}</span>`;
+                    } else {
+                        html += word[i];
+                    }
+                }
+                asteroid.wordDisplay.innerHTML = html;
+            }
+
+            fireLaser() {
+                const laser = document.createElement('div');
+                laser.className = 'laser';
+                laser.style.left = '50%';
+                laser.style.transform = 'translateX(-50%)';
+                this.gameArea.appendChild(laser);
+
+                setTimeout(() => laser.remove(), 300);
+            }
+
+            destroyAsteroid(asteroid) {
+                // Create explosion
+                this.createExplosion(asteroid.element);
+
+                // Play sounds
+                this.sound.playExplosion();
+
+                // Update combo
+                this.combo++;
+                if (this.combo > 1) {
+                    this.showComboPopup();
+                    if (this.combo % 5 === 0) {
+                        this.sound.playCombo();
+                    }
+                }
+                if (this.combo > this.maxCombo) {
+                    this.maxCombo = this.combo;
+                }
+
+                // Calculate score with combo multiplier
+                const baseScore = asteroid.word.length * 10;
+                const comboBonus = Math.floor(baseScore * (this.combo - 1) * 0.5);
+                this.score += baseScore + comboBonus;
+
+                // Track words destroyed for level progression
+                this.wordsDestroyed++;
+                if (this.wordsDestroyed >= this.wordsPerLevel * this.level) {
+                    this.levelUp();
+                }
+
+                // Remove asteroid
+                asteroid.element.remove();
+                this.asteroids = this.asteroids.filter(a => a !== asteroid);
+
+                // Clear input
+                this.input.value = '';
+
+                this.updateHUD();
+            }
+
+            createExplosion(asteroidElement) {
+                const rect = asteroidElement.getBoundingClientRect();
+                const gameRect = this.gameArea.getBoundingClientRect();
+
+                const explosion = document.createElement('div');
+                explosion.className = 'explosion';
+                explosion.style.left = (rect.left - gameRect.left + rect.width / 2) + 'px';
+                explosion.style.top = (rect.top - gameRect.top + rect.height / 2) + 'px';
+
+                const colors = ['#ff0', '#f80', '#f00', '#fff', '#0f0'];
+
+                for (let i = 0; i < 12; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'explosion-particle';
+                    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+                    const angle = (i / 12) * Math.PI * 2;
+                    const distance = 30 + Math.random() * 40;
+                    particle.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
+                    particle.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
+
+                    explosion.appendChild(particle);
+                }
+
+                this.gameArea.appendChild(explosion);
+                setTimeout(() => explosion.remove(), 500);
+            }
+
+            showComboPopup() {
+                this.comboPopup.textContent = `${this.combo}x COMBO!`;
+                this.comboPopup.style.opacity = '1';
+                setTimeout(() => {
+                    this.comboPopup.style.opacity = '0';
+                }, 500);
+            }
+
+            levelUp() {
+                this.level++;
+                this.sound.playLevelUp();
+
+                this.levelUpDisplay.style.opacity = '1';
+                setTimeout(() => {
+                    this.levelUpDisplay.style.opacity = '0';
+                }, 1500);
+
+                // Bonus shield on level up
+                if (this.shields < this.maxShields) {
+                    this.shields++;
+                }
+
+                this.updateHUD();
+            }
+
+            update() {
+                if (!this.gameRunning) return;
+
+                const now = Date.now();
+                const gameAreaHeight = this.gameArea.clientHeight;
+
+                // Check for asteroids that reached the bottom
+                for (const asteroid of [...this.asteroids]) {
+                    const elapsed = now - asteroid.startTime;
+                    const progress = elapsed / asteroid.duration;
+
+                    if (progress >= 1) {
+                        // Asteroid reached the ship!
+                        this.asteroidHit(asteroid);
+                    }
+                }
+
+                this.gameLoop = requestAnimationFrame(() => this.update());
+            }
+
+            asteroidHit(asteroid) {
+                this.sound.playDamage();
+
+                // Create explosion at bottom
+                asteroid.element.style.top = 'calc(100% - 50px)';
+                this.createExplosion(asteroid.element);
+
+                // Remove asteroid
+                asteroid.element.remove();
+                this.asteroids = this.asteroids.filter(a => a !== asteroid);
+
+                // Lose shield
+                this.shields--;
+                this.combo = 0;
+
+                // Clear current typing since target may be gone
+                this.input.value = '';
+
+                this.updateHUD();
+
+                // Check game over
+                if (this.shields <= 0) {
+                    this.gameOver();
+                }
+            }
+
+            updateHUD() {
+                this.scoreDisplay.textContent = this.score;
+                this.levelDisplay.textContent = this.level;
+                this.comboDisplay.textContent = this.combo;
+                this.shieldFill.style.width = (this.shields / this.maxShields * 100) + '%';
+            }
+
+            gameOver() {
+                this.gameRunning = false;
+                clearTimeout(this.spawnInterval);
+                cancelAnimationFrame(this.gameLoop);
+
+                this.sound.playGameOver();
+
+                // Clear remaining asteroids
+                this.asteroids.forEach(a => a.element.remove());
+                this.asteroids = [];
+
+                // Show game over screen
+                this.finalScoreDisplay.textContent = this.score;
+                this.finalLevelDisplay.textContent = this.level;
+
+                setTimeout(() => {
+                    this.gameOverScreen.style.display = 'flex';
+                }, 1500);
+            }
+        }
+
+        // Initialize game
+        const game = new SpaceTyper();
+    </script>
+</body>
+</html>
