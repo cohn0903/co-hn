@@ -1,0 +1,207 @@
+title: Cohn Family Dashboard
+views:
+  - title: Home
+    path: home
+    type: panel
+    badges: []
+    cards:
+      - type: custom:layout-card
+        layout_type: custom:grid-layout
+        layout:
+          grid-template-columns: 1fr 1fr 1fr
+          grid-template-rows: auto auto
+          grid-gap: 16px
+          padding: 16px
+          max-height: 100vh
+        cards:
+          # Clock - Big friendly clock
+          - type: custom:mushroom-template-card
+            primary: "🕐 {{ now().strftime('%I:%M') }}"
+            secondary: "{{ now().strftime('%A') }}"
+            icon: mdi:clock
+            icon_color: blue
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #64B5F6, #42A5F5);
+                  border-radius: 24px;
+                  border: 4px solid #1E88E5;
+                  height: 140px;
+                  --card-primary-font-size: 42px;
+                  --card-secondary-font-size: 22px;
+                  --primary-text-color: white;
+                  --secondary-text-color: #E3F2FD;
+                }
+                mushroom-shape-icon {
+                  --shape-color: rgba(255, 255, 255, 0.3) !important;
+                  --icon-size: 50px;
+                  --icon-color: white !important;
+                }
+
+          # School Countdown - Fun messaging
+          - type: custom:mushroom-template-card
+            primary: |
+              {% set countdown = states('sensor.school_departure_countdown') %}
+              {% if countdown == 'departed' %}
+                🎒 Have fun at school!
+              {% elif countdown == 'weekend' %}
+                🎮 NO SCHOOL!
+              {% else %}
+                {% set mins = state_attr('sensor.school_departure_countdown', 'total_minutes_remaining') | int(0) %}
+                {% if mins <= 5 %}
+                  🏃 GO GO GO!
+                {% elif mins <= 15 %}
+                  👟 Get your shoes!
+                {% elif mins <= 30 %}
+                  🍳 Eat breakfast!
+                {% else %}
+                  🚌 {{ state_attr('sensor.school_departure_countdown', 'hours_remaining') | int }}h {{ state_attr('sensor.school_departure_countdown', 'minutes_remaining') | int }}m
+                {% endif %}
+              {% endif %}
+            secondary: |
+              {% set countdown = states('sensor.school_departure_countdown') %}
+              {% if countdown == 'weekend' %}
+                It's the weekend! 🎉
+              {% else %}
+                Bus leaves at 7:15
+              {% endif %}
+            icon: mdi:bus-school
+            icon_color: |
+              {% set mins = state_attr('sensor.school_departure_countdown', 'total_minutes_remaining') | int(0) %}
+              {% if mins <= 15 %}red
+              {% elif mins <= 30 %}orange
+              {% else %}green{% endif %}
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #FFD54F, #FFC107);
+                  border-radius: 24px;
+                  border: 4px solid #FF8F00;
+                  height: 140px;
+                  --card-primary-font-size: 36px;
+                  --card-secondary-font-size: 18px;
+                  --primary-text-color: #5D4037;
+                  --secondary-text-color: #795548;
+                }
+                mushroom-shape-icon {
+                  --shape-color: rgba(255, 255, 255, 0.4) !important;
+                  --icon-size: 50px;
+                }
+
+          # Weather - Kid friendly
+          - type: custom:mushroom-template-card
+            primary: |
+              {% set temp = state_attr('weather.forecast_home', 'temperature') | float %}
+              {% set condition = states('weather.forecast_home') %}
+              {% if 'rain' in condition %}☔️
+              {% elif 'cloud' in condition %}☁️
+              {% elif 'sun' in condition or 'clear' in condition %}☀️
+              {% elif 'snow' in condition %}❄️
+              {% elif 'storm' in condition or 'thunder' in condition %}⛈️
+              {% else %}🌤️{% endif %} {{ temp | int }}°
+            secondary: |
+              {% set temp = state_attr('weather.forecast_home', 'temperature') | float %}
+              {% if temp > 85 %}Super hot! 🥵
+              {% elif temp > 75 %}Nice & warm! 😎
+              {% elif temp > 60 %}Perfect outside! 🌸
+              {% elif temp > 45 %}Wear a jacket! 🧥
+              {% else %}Brrrr cold! 🥶{% endif %}
+            icon: mdi:weather-sunny
+            icon_color: |
+              {% set temp = state_attr('weather.forecast_home', 'temperature') | float %}
+              {% if temp > 85 %}red
+              {% elif temp > 70 %}orange
+              {% elif temp > 50 %}green
+              {% else %}blue{% endif %}
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #81D4FA, #4FC3F7);
+                  border-radius: 24px;
+                  border: 4px solid #29B6F6;
+                  height: 140px;
+                  --card-primary-font-size: 42px;
+                  --card-secondary-font-size: 20px;
+                  --primary-text-color: #01579B;
+                  --secondary-text-color: #0277BD;
+                }
+                mushroom-shape-icon {
+                  --shape-color: rgba(255, 255, 255, 0.4) !important;
+                  --icon-size: 50px;
+                }
+
+          # Rockets Game Card - spans 3 columns
+          - type: custom:teamtracker-card
+            entity: sensor.team_tracker
+            home_side: left
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #EF5350, #E53935);
+                  border-radius: 24px;
+                  border: 4px solid #C62828;
+                  font-size: 18px;
+                  height: 180px;
+                }
+            view_layout:
+              grid-column: span 3
+
+          # Calendar - spans all 3 columns
+          - type: horizontal-stack
+            cards:
+              - type: custom:week-planner-card
+                calendars:
+                  - entity: calendar.cohn_shared_calendar
+                    color: "#7B1FA2"
+                days: 7
+                startingDay: today
+                hideWeekend: false
+                noCardBackground: false
+                eventBackground: "rgba(156, 39, 176, 0.3)"
+                showLocation: false
+                showDescription: false
+                hidePastEvents: true
+                hideDaysWithoutEvents: false
+                showEventIcon: false
+                showTime: true
+                timeFormat: h:mm A
+                dateFormat: ddd M/D
+                compact: true
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: linear-gradient(135deg, #CE93D8, #BA68C8);
+                      border-radius: 24px;
+                      border: 4px solid #8E24AA;
+                      font-size: 16px;
+                      --primary-text-color: white;
+                    }
+            view_layout:
+              grid-column: span 3
+
+          # Weekly Weather Forecast - spans all 3 columns
+          - type: custom:weather-chart-card
+            entity: weather.forecast_home
+            show_main: true
+            show_temperature: true
+            show_current_condition: true
+            show_attributes: true
+            show_humidity: true
+            show_pressure: false
+            show_wind_direction: true
+            show_wind_speed: true
+            show_sun: true
+            show_forecast: true
+            forecast_type: daily
+            number_of_forecasts: 7
+            card_mod:
+              style: |
+                ha-card {
+                  background: linear-gradient(135deg, #80DEEA, #4DD0E1);
+                  border-radius: 24px;
+                  border: 4px solid #00BCD4;
+                  font-size: 18px;
+                  height: 200px;
+                }
+            view_layout:
+              grid-column: span 3
